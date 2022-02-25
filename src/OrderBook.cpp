@@ -14,10 +14,11 @@ void OrderBook::newOrder(const int userId, const int price, const int qty, const
 {
     switch(side)
     {
-        case 'B':
+        case Order::Side::Buy:
             newOrderImpl(bidOrders, askOrders, price, qty, side, userId, orderId);
             break;
-        case 'S':
+            
+        case Order::Side::Sell:
             newOrderImpl(askOrders, bidOrders, price, qty, side, userId, orderId);
             break;
     }
@@ -45,25 +46,23 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
 {
     const auto order = std::make_shared<Order>(price, qty, side, userId, orderId);
     
-    if(order->price > 0)
+    /* full or partial execution */
+    execution(otherContainer, order);
+    
+    /* if has resting qty... */
+    if(order->qty > 0)
     {
-        /* limit order */
+        /* ...insert into orderbook */
         const auto& result = container.insert(order);
 
-        if(result.second) // FIXME
+        /* if inserted */
+        if(result.second)
         {
-            execution(otherContainer, order);
-
-            if(order->getQty() > 0)
+            if(order->qty > 0)
             {
                 //aggregatePriceLevel( orders, order->price, order->side );
                 
                 //logger.debug( format::f2::logTraderAddedOrder, trader->toString(), order->toString() );
-            }
-            else
-            {
-                // order has no resting quantity (was executed), so remove it
-                container.erase(result.first);
             }
         }
         else
@@ -72,11 +71,6 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
 
             //trader->notifyError( format::f0::orderAlreadyExist.str() );
         }
-    }
-    else
-    {
-        /* market order */
-        execution(otherContainer, order);
     }
 }
 

@@ -198,6 +198,79 @@ class TestOrderBook(unittest.TestCase):
         
         # F
         book.flush()
+        
+        
+    def testScenario8(self):
+        '''scenario8, tighten spread through new limit orders'''
+        
+        book = orderbook.OrderBook()
+
+        # build book, TOB = 10/11
+        # N, 1, IBM, 10, 100, B, 1
+        book.newOrder(userA, 10, 100, buy, 1)
+        
+        # N, 1, IBM, 16, 100, S, 2
+        book.newOrder(userA, 16, 100, sell, 2)
+        
+        # N, 2, IBM, 9, 100, B, 101
+        book.newOrder(userB, 9, 100, buy, 101)
+        
+        # N, 2, IBM, 15, 100, S, 102
+        book.newOrder(userB, 15, 100, sell, 102)
+
+        # new bid, ask TOB = 11/14
+        # N, 2, IBM, 11, 100, B, 103
+        book.newOrder(userB, 11, 100, buy, 103)
+        
+        # N, 1, IBM, 14, 100, S, 3
+        book.newOrder(userA, 14, 100, sell, 3)
+        
+        # F
+        book.flush()
+        
+        
+    def testScenario9(self):
+        #scenario9, balanced book, market sell partial
+        
+        book = orderbook.OrderBook()
+
+        # build book, TOB = 10/11
+        # N, 1, IBM, 10, 100, B, 1
+        book.newOrder(userA, 10, 100, buy, 1)
+        
+        # N, 1, IBM, 12, 100, S, 2
+        book.newOrder(userA, 12, 100, sell, 2)
+        
+        # N, 2, IBM, 9, 100, B, 101
+        book.newOrder(userB, 9, 100, buy, 101)
+        
+        # N, 2, IBM, 11, 100, S, 102
+        book.newOrder(userB, 11, 100, sell, 102)
+
+        # market sell, generate partial trade, TOB = 10/11
+        # N, 2, IBM, 0, 20, S, 103
+        book.newOrder(userB, 0, 20, sell, 103)
+        
+        # F
+        book.flush()
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
 
 if __name__ == '__main__':

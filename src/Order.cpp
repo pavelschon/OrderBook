@@ -55,7 +55,7 @@ int Order::getQty() const
 
 
 /**
- * @brief Get order id
+ * @brief Get order unique id
  * 
  */
 Order::UniqueId Order::getUniqueId() const
@@ -85,11 +85,11 @@ bool Order::isExecutableWith( const Order::SharedPtr& other ) const
         // I'm market order
         return true;
     }
-    else if(side == 'B' && other->side == 'S')
+    else if(side == Side::Buy && other->side == Side::Sell)
     {
         return price >= other->price;
     }
-    else if(side == 'S' && other->side == 'B')
+    else if(side == Side::Sell && other->side == Side::Buy)
     {
         return price <= other->price;
     }
