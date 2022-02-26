@@ -23,6 +23,9 @@ public:
     /* Create acknowledge message */
     void acknowledge(const int userId, const int orderId);
     
+    /* Create acknowledge message */
+    void cancel(const int userId, const int orderId);
+    
     
     /* Create trade message */
     void trade(const int userIdBuy, const int orderIdBuy,
