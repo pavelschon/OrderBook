@@ -54,6 +54,12 @@ public:
     
     /* Get order user id */
     int getUserId( void ) const;
+    
+    /* get side of this order */
+    char getSide() const;
+    
+    /* get other side of this order */
+    char getOtherSide() const;
 
 private:
     const Time time;

@@ -74,6 +74,37 @@ int Order::getUserId() const
 }
 
 
+
+/**
+ * @brief get side of this order
+ *
+ */
+char Order::getSide() const
+{
+    return side;
+}
+
+
+/**
+ * @brief get other side of this order
+ *
+ */
+char Order::getOtherSide() const
+{
+    switch(side)
+    {
+        case Order::Side::Buy:
+            return Order::Side::Sell;
+            
+        case Order::Side::Sell:
+            return Order::Side::Buy;
+            
+        default:
+            throw std::exception();
+    }
+}
+
+
 /**
  * @brief Check if this order is executable with other order
  * 
