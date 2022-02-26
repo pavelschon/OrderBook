@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "OrderBookFwd.hpp"
 #include "OrderContainer.hpp"
 
 #include <boost/python/list.hpp>
@@ -14,19 +15,6 @@
 class Response
 {
 public:
-    using PyList = boost::python::list;
-    
-    struct TopOfBook
-    {
-        using Optional = boost::optional<TopOfBook>;
-        
-        int price;
-        int qty;
-        
-        /* compare top-of-book objects */
-        bool operator!=( const TopOfBook& other) const;
-    };
-    
     Response() = default;
     
     /* Get payload of this response */

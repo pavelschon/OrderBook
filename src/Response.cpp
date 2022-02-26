@@ -10,7 +10,7 @@
  * @brief Get payload of this response
  * 
  */
-Response::PyList Response::get() const
+PyList Response::get() const
 {
     return payload;
 }
@@ -52,15 +52,5 @@ void Response::trade(const int userIdBuy, const int orderIdBuy,
     tradeMessage.append(quantity);
     
     payload.append(tradeMessage);
-}
-
-
-/**
- * @brief Compare top-of-book objects
- *
- */
-bool Response::TopOfBook::operator!=( const TopOfBook& other) const
-{
-    return price != other.price || qty != other.qty;
 }
 

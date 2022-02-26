@@ -10,17 +10,17 @@
  * @brief Create new order
  * 
  */
-Response::PyList OrderBook::newOrder(const int userId, const int price, const int qty, const char side, const int orderId)
+PyList OrderBook::newOrder(const int userId, const int price, const int qty, const char side, const int orderId)
 {
     Response response;
     
     switch(side)
     {
-        case Order::Side::Buy:
+        case Side::Buy:
             newOrderImpl(bidOrders, askOrders, response, price, qty, side, userId, orderId);
             break;
             
-        case Order::Side::Sell:
+        case Side::Sell:
             newOrderImpl(askOrders, bidOrders, response, price, qty, side, userId, orderId);
             break;
     }
@@ -85,7 +85,7 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
 template<class OrderContainer>
 void OrderBook::cancelOrderImpl(OrderContainer& container, const int userId, const int orderId )
 {
-    auto& idx = container.template get<tag::UniqueId>();
+    auto& idx = container.template get<Tag::UniqueId>();
     const auto& it = idx.find(std::make_tuple(userId, orderId));
 
     if(it != idx.end())
@@ -102,7 +102,7 @@ void OrderBook::cancelOrderImpl(OrderContainer& container, const int userId, con
 template<class OrderContainer>
 int OrderBook::trade(Response& response, OrderContainer& container, const Order::SharedPtr& order)
 {
-    auto& idx = container.template get<tag::PriceTime>();
+    auto& idx = container.template get<Tag::PriceTime>();
     auto it   = idx.begin();
 
     int tradedQty = 0;
@@ -127,14 +127,14 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
         {
             switch(order->side)
             {
-                case Order::Side::Buy:
+                case Side::Buy:
                     response.trade(order->userId, order->orderId,
                         otherOrder->userId, otherOrder->orderId,
                         otherOrder->price, matchQty);
                     
                     break;
                     
-                case Order::Side::Sell:
+                case Side::Sell:
                     response.trade(
                         otherOrder->userId, otherOrder->orderId,
                         order->userId, order->orderId,
@@ -164,11 +164,11 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
  * 
  */
 template<class OrderContainer>
-boost::optional<Response::TopOfBook> OrderBook::getTopOfBook(const OrderContainer& container)
+TopOfBook::Optional OrderBook::getTopOfBook(const OrderContainer& container)
 {
     if(container.size())
     {
-        const auto& idx = container.template get<tag::Price>();
+        const auto& idx = container.template get<Tag::Price>();
         const auto bestPrice = (*idx.begin())->price;
         const auto& end = idx.upper_bound(bestPrice);
         auto it = idx.lower_bound(bestPrice);
@@ -182,7 +182,7 @@ boost::optional<Response::TopOfBook> OrderBook::getTopOfBook(const OrderContaine
             qty += (*it)->getQty();
         }
         
-        return Response::TopOfBook{bestPrice, qty};
+        return TopOfBook{ bestPrice, qty };
     }
     else
     {
@@ -196,7 +196,7 @@ boost::optional<Response::TopOfBook> OrderBook::getTopOfBook(const OrderContaine
  *
  */
 template<class OrderContainer>
-void Response::topOfBook(const OrderContainer& container, const Response::TopOfBook::Optional& prevTopOfBook, char side)
+void Response::topOfBook(const OrderContainer& container, const TopOfBook::Optional& prevTopOfBook, char side)
 {
     const auto& topOfBook = OrderBook::getTopOfBook(container);
     

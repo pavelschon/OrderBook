@@ -5,9 +5,7 @@
 
 #pragma once
 
-#include <chrono>
-#include <memory>
-#include <tuple>
+#include "OrderBookFwd.hpp"
 
 
 class Order
@@ -16,17 +14,7 @@ class Order
     friend class OrderBook;
     
 public:
-    /* helper types */
-    using UniqueId = std::tuple<int, int>;
-    using Time = std::chrono::time_point<std::chrono::high_resolution_clock>;
     using SharedPtr = std::shared_ptr<Order>;
-    
-    /* side helper */
-    struct Side
-    {
-        static const char Buy = 'B';
-        static const char Sell = 'S';
-    };
     
     /* ctor */
     Order(const int price_, const int qty_, const char side_, const int userId_, const int orderId_);

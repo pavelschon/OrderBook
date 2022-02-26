@@ -26,7 +26,7 @@ Order::Order(const int price_, const int qty_, const char side_, const int userI
  * @brief Get order time priority
  * 
  */
-Order::Time Order::getTime() const
+Time Order::getTime() const
 {
     return time;
 }
@@ -56,7 +56,7 @@ int Order::getQty() const
  * @brief Get order unique id
  * 
  */
-Order::UniqueId Order::getUniqueId() const
+UniqueId Order::getUniqueId() const
 {
     return std::make_tuple(userId, orderId);
 }
@@ -91,11 +91,11 @@ char Order::getOtherSide() const
 {
     switch(side)
     {
-        case Order::Side::Buy:
-            return Order::Side::Sell;
+        case Side::Buy:
+            return Side::Sell;
             
-        case Order::Side::Sell:
-            return Order::Side::Buy;
+        case Side::Sell:
+            return Side::Buy;
             
         default:
             throw std::exception();

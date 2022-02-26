@@ -23,7 +23,7 @@ public:
     OrderBook& operator=(const OrderBook&) = delete;
     
     /* Create new order */
-    Response::PyList newOrder(const int userId, const int price, const int qty, const char side, const int orderId);
+    PyList newOrder(const int userId, const int price, const int qty, const char side, const int orderId);
     
     /* Cancel existing order */
     void cancelOrder(const int userId, const int userOrderId);
@@ -33,7 +33,7 @@ public:
     
     /* Get the best price+quantity from the order container */
     template<class OrderContainer>
-    static boost::optional<Response::TopOfBook> getTopOfBook(const OrderContainer& container);
+    static TopOfBook::Optional getTopOfBook(const OrderContainer& container);
     
 private:
     /* Create new order */
