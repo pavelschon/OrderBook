@@ -9,17 +9,6 @@ buy, sell = 'B', 'S'
 
 
 class TestOrderBook(unittest.TestCase):
-    def assertResult(self, resultA, resultB):
-        self.assertEqual(len(resultA), len(resultB))
-        for messageA, messageB in zip(resultA, resultB):
-            self.assertMessage(messageA, messageB)
-                
-    def assertMessage(self, messageA, messageB):
-        self.assertEqual(len(messageA), len(messageB))
-        for itemA, itemB in zip(messageA, messageB):
-            self.assertEqual(itemA, itemB)
-        
-    
     def testScenario01(self):
         '''scenario1, balanced book'''
         
@@ -27,42 +16,42 @@ class TestOrderBook(unittest.TestCase):
 
         # build book, TOB = 10/11
         # N, 1, IBM, 10, 100, B, 1
-        self.assertResult(
+        self.assertEqual(
             book.newOrder(userA, 10, 100, buy, 1),
             [[ 'A', 1, 1 ],
              ['B', 'B', 10, 100]]
         )
         
         # N, 1, IBM, 12, 100, S, 2
-        self.assertResult(
+        self.assertEqual(
             book.newOrder(userA, 12, 100, sell, 2),
             [[ 'A', 1, 2],
              [ 'B', 'S', 12, 100]])
         
         # N, 2, IBM, 9, 100, B, 101
-        self.assertResult(
+        self.assertEqual(
             book.newOrder(userB, 9, 100, buy, 101),
             [[ 'A', 2, 101]])
         
         # N, 2, IBM, 11, 100, S, 102
-        self.assertResult(
+        self.assertEqual(
             book.newOrder(userB, 11, 100, sell, 102),
             [[ 'A', 2, 102],
              [ 'B', 'S', 11, 100]])
         
         # hit book on each side, generate trades, TOB = 9/12
         # N, 1, IBM, 11, 100, B, 3
-        self.assertResult(
+        self.assertEqual(
             book.newOrder(userA, 11, 100, buy, 3),
             [[ 'A', 1, 3],
              [ 'T', 1, 3, 2, 102, 11, 100 ],
-             ['B', 'S', 12, 100 ]])
+             [ 'B', 'S', 12, 100 ]])
         
         # N, 2, IBM, 10, 100, S, 103
         self.assertEqual(
             book.newOrder(userB, 10, 100, sell, 103),
             [[ 'A', 2, 103 ],
-             [ 'T', 2, 103, 1, 1, 10, 100 ],
+             [ 'T', 1, 1, 2, 103, 10, 100 ],
              [ 'B', 'B', 9, 100 ]])
         
         # replenish book on each side, TOB = 10/11
@@ -388,19 +377,36 @@ class TestOrderBook(unittest.TestCase):
 
         # build book, TOB = 10/11
         # N, 1, IBM, 10, 100, B, 1
-        book.newOrder(userA, 10, 100, buy, 1)
+        self.assertEqual(
+            book.newOrder(userA, 10, 100, buy, 1),
+            [[ 'A', 1, 1 ],
+             [ 'B', 'B', 10, 100 ]])
         
         # N, 1, IBM, 12, 100, S, 2
-        book.newOrder(userA, 12, 100, sell, 2)
+        self.assertEqual(
+            book.newOrder(userA, 12, 100, sell, 2),
+            [[ 'A', 1, 2 ],
+             [ 'B', 'S', 12, 100 ]])
         
         # N, 2, IBM, 9, 100, B, 101
-        book.newOrder(userB, 9, 100, buy, 101)
+        self.assertEqual(
+            book.newOrder(userB, 9, 100, buy, 101),
+            [[ 'A', 2, 101 ]])
         
         # N, 2, IBM, 11, 100, S, 102
-        book.newOrder(userB, 11, 100, sell, 102)
+        self.assertEqual(
+            book.newOrder(userB, 11, 100, sell, 102),
+            [[ 'A', 2, 102 ],
+             [ 'B', 'S', 11, 100 ]])
 
         # limit sell, generate partial trade, TOB = 10/11
         # N, 2, IBM, 10, 20, S, 103
+        self.assertEqual(
+            book.newOrder(userB, 10, 20, sell, 103),
+            [[ 'A', 2, 103 ],
+             [ 'T', 1, 1, 2, 103, 10, 20 ],
+             [ 'B', 'B', 10, 80 ]])
+        
         # F
         book.flush()
         
@@ -438,30 +444,55 @@ class TestOrderBook(unittest.TestCase):
 
         # build book, TOB = 10/11
         # N, 1, IBM, 10, 100, B, 1
-        book.newOrder(userA, 10, 100, buy, 1)
+        self.assertEqual(
+            book.newOrder(userA, 10, 100, buy, 1),
+            [[ 'A', 1, 1 ],
+             [ 'B', 'B', 10, 100 ]])
         
         # N, 1, IBM, 12, 100, S, 2
-        book.newOrder(userA, 12, 100, sell, 2)
+        self.assertEqual(
+            book.newOrder(userA, 12, 100, sell, 2),
+            [[ 'A', 1, 2 ],
+             [ 'B', 'S', 12, 100 ]])
         
         # N, 2, IBM, 9, 100, B, 101
-        book.newOrder(userB, 9, 100, buy, 101)
+        self.assertEqual(
+            book.newOrder(userB, 9, 100, buy, 101),
+            [[ 'A', 2, 101 ]])
         
         # N, 2, IBM, 11, 100, S, 102
-        book.newOrder(userB, 11, 100, sell, 102)
+        self.assertEqual(
+            book.newOrder(userB, 11, 100, sell, 102),
+            [[ 'A', 2, 102 ],
+             [ 'B', 'S', 11, 100 ]])
         
         # N, 2, IBM, 10, 50, B, 103
-        book.newOrder(userB, 10, 50, buy, 103)
+        self.assertEqual(
+            book.newOrder(userB, 10, 50, buy, 103),
+            [[ 'A', 2, 103 ],
+             [ 'B', 'B', 10, 150 ]])
         
         # N, 1, IBM, 11, 50, S, 3
-        book.newOrder(userA, 11, 50, sell, 3)
+        self.assertEqual(
+            book.newOrder(userA, 11, 50, sell, 3),
+            [[ 'A', 1, 3 ],
+             [ 'B', 'S', 11, 150 ]])
         
 
         # market buy and sell, generate trades, TOB = 10/11
         # N, 1, IBM, 11, 100, B, 4
-        book.newOrder(userA, 11, 100, buy, 4)
+        self.assertEqual(
+            book.newOrder(userA, 11, 100, buy, 4),
+            [[ 'A', 1, 4 ],
+             [ 'T', 1, 4, 2, 102, 11, 100 ],
+             [ 'B', 'S', 11, 50 ]])
         
         # N, 2, IBM, 10, 100, S, 104
-        book.newOrder(userB, 10, 100, sell, 104)
+        self.assertEqual(
+            book.newOrder(userB, 10, 100, sell, 104),
+            [[ 'A', 2, 104 ],
+             [ 'T', 1, 1, 2, 104, 10, 100 ],
+             [ 'B', 'B', 10, 50 ]])
         
         # F
         book.flush()
@@ -503,20 +534,35 @@ class TestOrderBook(unittest.TestCase):
 
         # build book, TOB = 10/11
         # N, 1, IBM, 10, 100, B, 1
-        book.newOrder(userA, 10, 100, buy, 1)
+        self.assertEqual(
+            book.newOrder(userA, 10, 100, buy, 1),
+            [[ 'A', 1, 1 ],
+             [ 'B', 'B', 10, 100 ]])
         
         # N, 1, IBM, 12, 100, S, 2
-        book.newOrder(userA, 12, 100, sell, 2)
+        self.assertEqual(
+            book.newOrder(userA, 12, 100, sell, 2),
+            [[ 'A', 1, 2 ],
+             [ 'B', 'S', 12, 100 ]])
         
         # N, 2, IBM, 9, 100, B, 101
-        book.newOrder(userB, 9, 100, buy, 101)
+        self.assertEqual(
+            book.newOrder(userB, 9, 100, buy, 101),
+            [[ 'A', 2, 101 ]])
         
         # N, 2, IBM, 11, 100, S, 102
-        book.newOrder(userB, 11, 100, sell, 102)
+        self.assertEqual(
+            book.newOrder(userB, 11, 100, sell, 102),
+            [[ 'A', 2, 102  ],
+             [ 'B', 'S', 11, 100 ]])
 
         # cancel orders, TOB = 10/11
-        # C, 1, 2
         book.cancelOrder(userA, 2)
+        # C, 1, 2
+        #self.assertEqual(
+        #    book.cancelOrder(userA, 2),
+        #    [[ 'C', 1, 2, 3 ],
+        #     [ 'A', 1, 3 ]])
         
         # C, 2, 101
         book.cancelOrder(userB, 101)

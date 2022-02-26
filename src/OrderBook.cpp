@@ -33,10 +33,14 @@ PyList OrderBook::newOrder(const int userId, const int price, const int qty, con
  * @brief Cancel existing order
  * 
  */
-void OrderBook::cancelOrder(const int userId, const int orderId)
+PyList OrderBook::cancelOrder(const int userId, const int orderId)
 {
-    cancelOrderImpl( bidOrders, userId, orderId );
-    cancelOrderImpl( askOrders, userId, orderId );
+    Response response;
+    
+    cancelOrderImpl(response, bidOrders, userId, orderId);
+    cancelOrderImpl(response, askOrders, userId, orderId);
+    
+    return response.get();
 }
 
 
@@ -83,14 +87,15 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
  * 
  */
 template<class OrderContainer>
-void OrderBook::cancelOrderImpl(OrderContainer& container, const int userId, const int orderId )
+void OrderBook::cancelOrderImpl(Response& response, OrderContainer& container, const int userId, const int orderId )
 {
     auto& idx = container.template get<Tag::UniqueId>();
     const auto& it = idx.find(std::make_tuple(userId, orderId));
 
     if(it != idx.end())
     {
-        idx.erase( it );
+        
+        idx.erase(it);
     }
 }
 
@@ -110,38 +115,30 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
     while(it != idx.end() && order->isExecutableWith(*it) && order->qty > 0)
     {
         const auto& otherOrder = *it;
-        const auto matchQty = std::min( order->qty, otherOrder->qty );
+        const auto matchQty = std::min(order->qty, otherOrder->qty);
 
         order->qty -= matchQty;
         otherOrder->qty -= matchQty;
         tradedQty += matchQty;
         
         /* now prepare the trade message */
-        if(order->price > 0)
+        switch(order->side)
         {
-            response.trade(order->userId, order->orderId,
-                           otherOrder->userId, otherOrder->orderId,
-                           otherOrder->price, matchQty);
-        }
-        else
-        {
-            switch(order->side)
-            {
-                case Side::Buy:
-                    response.trade(order->userId, order->orderId,
-                        otherOrder->userId, otherOrder->orderId,
-                        otherOrder->price, matchQty);
-                    
-                    break;
-                    
-                case Side::Sell:
-                    response.trade(
-                        otherOrder->userId, otherOrder->orderId,
-                        order->userId, order->orderId,
-                        otherOrder->price, matchQty);
-                    
-                    break;
-            }
+            case Side::Buy:
+                response.trade(
+                    order->userId, order->orderId,
+                    otherOrder->userId, otherOrder->orderId,
+                    otherOrder->price, matchQty);
+                
+                break;
+                
+            case Side::Sell:
+                response.trade(
+                    otherOrder->userId, otherOrder->orderId,
+                    order->userId, order->orderId,
+                    otherOrder->price, matchQty);
+                
+                break;
         }
 
         /* other order fully matched, remove it */
@@ -212,7 +209,7 @@ void Response::topOfBook(const OrderContainer& container, const TopOfBook::Optio
         
         payload.append(topOfBookMessage);
     }
-    else if((!prevTopOfBook) || prevTopOfBook.value() != topOfBook.value())
+    else if((!prevTopOfBook) || (prevTopOfBook.value() != topOfBook.value()))
     {
         topOfBookMessage.append(topOfBook.value().price);
         topOfBookMessage.append(topOfBook.value().qty);
@@ -229,7 +226,8 @@ void Response::topOfBook(const OrderContainer& container, const TopOfBook::Optio
  */
 void OrderBook::flush()
 {
-
+    bidOrders.clear();
+    askOrders.clear();
 }
 
 

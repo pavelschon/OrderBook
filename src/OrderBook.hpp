@@ -26,7 +26,7 @@ public:
     PyList newOrder(const int userId, const int price, const int qty, const char side, const int orderId);
     
     /* Cancel existing order */
-    void cancelOrder(const int userId, const int userOrderId);
+    PyList cancelOrder(const int userId, const int userOrderId);
     
     /* Flush orderbook */
     void flush();
@@ -43,7 +43,7 @@ private:
 
     /* Cancel existing order */
     template<class OrderContainer>
-    static void cancelOrderImpl(OrderContainer& container, const int userId, const int orderId);
+    static void cancelOrderImpl(Response& response, OrderContainer& container, const int userId, const int orderId);
     
     /* Handle order execution (trade) */
     template<class OrderContainer>
