@@ -38,8 +38,8 @@ public:
 private:
     /* Create new order */
     template<class OrderContainer, class OtherContainer>
-    void newOrderImpl(OrderContainer& container, OtherContainer& otherContainer, Response& response,
-                      const int price, const int qty, const char side, const int userId, const int orderId);
+    static void newOrderImpl(OrderContainer& container, OtherContainer& otherContainer, Response& response,
+                             const int price, const int qty, const char side, const int userId, const int orderId);
 
     /* Cancel existing order */
     template<class OrderContainer>

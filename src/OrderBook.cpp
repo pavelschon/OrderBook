@@ -90,8 +90,6 @@ void OrderBook::cancelOrderImpl(OrderContainer& container, const int userId, con
 
     if(it != idx.end())
     {
-        const auto order = *it;
-
         idx.erase( it );
     }
 }
