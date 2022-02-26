@@ -5,8 +5,6 @@
 
 #include "Order.hpp"
 
-#include <iostream>
-
 
 /**
  * @brief Constructor
@@ -20,7 +18,7 @@ Order::Order(const int price_, const int qty_, const char side_, const int userI
     userId{ userId_ },
     orderId{ orderId_ }
 {
-    std::cout << "new order " << price << " " << qty << " " << side << " " << userId << " " << orderId << "\n";
+
 }
 
 

@@ -118,20 +118,9 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
         tradedQty += matchQty;
         
         /* now prepare the trade message */
-        switch(order->side)
-        {
-            case Order::Side::Buy:
-                response.trade(order->userId, order->orderId,
-                               otherOrder->userId, otherOrder->orderId,
-                               otherOrder->price, matchQty);
-                break;
-                
-            case Order::Side::Sell:
-                response.trade(otherOrder->userId, otherOrder->orderId,
-                               order->userId, order->orderId,
-                               otherOrder->price, matchQty);
-                break;
-        }
+        response.trade(order->userId, order->orderId,
+                       otherOrder->userId, otherOrder->orderId,
+                       otherOrder->price, matchQty);
 
         // other order fully matched, remove it
         if( otherOrder->qty < 1 )
