@@ -31,9 +31,9 @@ public:
     /* Flush orderbook */
     void flush();
     
-    /* Get the best price from the order container */
+    /* Get the best price+quantity from the order container */
     template<class OrderContainer>
-    static boost::optional<int> getBestPrice(const OrderContainer& container);
+    static boost::optional<Response::TopOfBook> getTopOfBook(const OrderContainer& container);
     
 private:
     /* Create new order */

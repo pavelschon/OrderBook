@@ -58,3 +58,13 @@ void Response::trade(const int userIdBuy, const int orderIdBuy,
     payload.append(tradeMessage);
 }
 
+
+/**
+ * @brief Compare top-of-book objects
+ *
+ */
+bool Response::TopOfBook::operator!=( const TopOfBook& other) const
+{
+    return price != other.price || qty != other.qty;
+}
+

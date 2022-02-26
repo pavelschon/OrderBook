@@ -51,8 +51,8 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
     const auto& order = std::make_shared<Order>(price, qty, side, userId, orderId);
     
     /* calculate top-of-book */
-    const auto& prevBestPrice = OrderBook::getBestPrice(container);
-    const auto& prevBestPriceOther = OrderBook::getBestPrice(otherContainer);
+    const auto& prevTopOfBook = OrderBook::getTopOfBook(container);
+    const auto& prevTopOfBookOther = OrderBook::getTopOfBook(otherContainer);
     
     /* create acknowledge message */
     response.acknowledge(userId, orderId);
@@ -67,13 +67,13 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
         if(container.insert(order).second)
         {
             /* if inserted, then maybe create top-of-book message */
-            response.topOfBook(container, prevBestPrice, order->side);
+            response.topOfBook(container, prevTopOfBook, order->side);
         }
     }
     
     if(tradedQty > 0)
     {
-        response.topOfBook(otherContainer, prevBestPriceOther, order->getOtherSide());
+        response.topOfBook(otherContainer, prevTopOfBookOther, order->getOtherSide());
     }
 }
 
@@ -139,6 +139,7 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
                         otherOrder->userId, otherOrder->orderId,
                         order->userId, order->orderId,
                         otherOrder->price, matchQty);
+                    
                     break;
             }
         }
@@ -163,13 +164,25 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
  * 
  */
 template<class OrderContainer>
-boost::optional<int> OrderBook::getBestPrice(const OrderContainer& container)
+boost::optional<Response::TopOfBook> OrderBook::getTopOfBook(const OrderContainer& container)
 {
     if(container.size())
     {
         const auto& idx = container.template get<tag::Price>();
+        const auto bestPrice = (*idx.begin())->price;
+        const auto& end = idx.upper_bound(bestPrice);
+        auto it = idx.lower_bound(bestPrice);
+
+        int qty = 0;
+
+        /* iterate over orders in the range */
+        for(; it != end; ++it )
+        {
+            /* sum-up the quantity */
+            qty += (*it)->getQty();
+        }
         
-        return (*idx.begin())->price;
+        return Response::TopOfBook{bestPrice, qty};
     }
     else
     {
@@ -183,41 +196,26 @@ boost::optional<int> OrderBook::getBestPrice(const OrderContainer& container)
  *
  */
 template<class OrderContainer>
-void Response::topOfBook(const OrderContainer& container, const boost::optional<int>& prevBestPrice, char side)
+void Response::topOfBook(const OrderContainer& container, const Response::TopOfBook::Optional& prevTopOfBook, char side)
 {
-    const auto& bestPrice = OrderBook::getBestPrice(container);
+    const auto& topOfBook = OrderBook::getTopOfBook(container);
     
     Type topOfBookMessage;
     
     topOfBookMessage.append('B');
     topOfBookMessage.append(side);
     
-    if(!bestPrice)
+    if(!topOfBook)
     {
         topOfBookMessage.append('-');
         topOfBookMessage.append('-');
         
         payload.append(topOfBookMessage);
     }
-    else if((!prevBestPrice) || prevBestPrice.value() != bestPrice.value())
+    else if((!prevTopOfBook) || prevTopOfBook.value() != topOfBook.value())
     {
-        const auto& idx = container.template get<tag::Price>();
-        
-        /* now get the orders-range in this price level */
-        const auto& end = idx.upper_bound(bestPrice.value());
-        auto it = idx.lower_bound(bestPrice.value());
-
-        int qty = 0;
-
-        /* iterate over orders in the range */
-        for(; it != end; ++it )
-        {
-            /* sum-up the quantity */
-            qty += (*it)->getQty();
-        }
-        
-        topOfBookMessage.append(bestPrice.value());
-        topOfBookMessage.append(qty);
+        topOfBookMessage.append(topOfBook.value().price);
+        topOfBookMessage.append(topOfBook.value().qty);
         
         payload.append(topOfBookMessage);
     }

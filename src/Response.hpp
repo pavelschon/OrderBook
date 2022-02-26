@@ -16,6 +16,17 @@ class Response
 public:
     using Type = boost::python::list;
     
+    struct TopOfBook
+    {
+        using Optional = boost::optional<TopOfBook>;
+        
+        int price;
+        int qty;
+        
+        /* compare top-of-book objects */
+        bool operator!=( const TopOfBook& other) const;
+    };
+    
     Response() = default;
     
     /* Get payload of this response */
@@ -33,7 +44,7 @@ public:
     /* Create top-of-book message */
     template<class OrderContainer>
     void topOfBook(const OrderContainer& container,
-                   const boost::optional<int>& prevBestPrice, char side);
+                   const TopOfBook::Optional& prevTopOfBook, char side);
     
 private:
     Type payload;
