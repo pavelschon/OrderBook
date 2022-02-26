@@ -23,7 +23,7 @@ public:
     OrderBook& operator=(const OrderBook&) = delete;
     
     /* Create new order */
-    Response::Type newOrder(const int userId, const int price, const int qty, const char side, const int orderId);
+    Response::PyList newOrder(const int userId, const int price, const int qty, const char side, const int orderId);
     
     /* Cancel existing order */
     void cancelOrder(const int userId, const int userOrderId);

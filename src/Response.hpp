@@ -14,7 +14,7 @@
 class Response
 {
 public:
-    using Type = boost::python::list;
+    using PyList = boost::python::list;
     
     struct TopOfBook
     {
@@ -30,7 +30,7 @@ public:
     Response() = default;
     
     /* Get payload of this response */
-    Type get() const;
+    PyList get() const;
     
     /* Create acknowledge message */
     void acknowledge(const int userId, const int orderId);
@@ -47,6 +47,6 @@ public:
                    const TopOfBook::Optional& prevTopOfBook, char side);
     
 private:
-    Type payload;
+    PyList payload;
 };
 

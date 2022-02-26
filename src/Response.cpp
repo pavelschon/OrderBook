@@ -6,15 +6,11 @@
 #include "Response.hpp"
 
 
-namespace py = boost::python;
-
-
-
 /**
  * @brief Get payload of this response
  * 
  */
-Response::Type Response::get() const
+Response::PyList Response::get() const
 {
     return payload;
 }
@@ -26,7 +22,7 @@ Response::Type Response::get() const
  */
 void Response::acknowledge(const int userId, const int orderId)
 {
-    py::list ackMessage;
+    PyList ackMessage;
     
     ackMessage.append('A');
     ackMessage.append(userId);
@@ -45,7 +41,7 @@ void Response::trade(const int userIdBuy, const int orderIdBuy,
                      const int userIdSell, const int orderIdSell,
                      const int price, const int quantity )
 {
-    py::list tradeMessage;
+    PyList tradeMessage;
     
     tradeMessage.append('T');
     tradeMessage.append(userIdBuy);

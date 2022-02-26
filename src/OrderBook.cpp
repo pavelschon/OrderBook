@@ -10,7 +10,7 @@
  * @brief Create new order
  * 
  */
-Response::Type OrderBook::newOrder(const int userId, const int price, const int qty, const char side, const int orderId)
+Response::PyList OrderBook::newOrder(const int userId, const int price, const int qty, const char side, const int orderId)
 {
     Response response;
     
@@ -200,7 +200,7 @@ void Response::topOfBook(const OrderContainer& container, const Response::TopOfB
 {
     const auto& topOfBook = OrderBook::getTopOfBook(container);
     
-    Type topOfBookMessage;
+    PyList topOfBookMessage;
     
     topOfBookMessage.append('B');
     topOfBookMessage.append(side);
