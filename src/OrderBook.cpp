@@ -117,8 +117,8 @@ void OrderBook::execution( OrderContainer& container, const Order::SharedPtr& or
     while( it != idx.end() && order->isExecutableWith( *it ) && order->qty > 0 )
     {
         const auto& otherOrder = *it;
-        const int matchPrice = otherOrder->price;
-        const int matchQty = std::min( order->qty, otherOrder->qty );
+        //const auto matchPrice = otherOrder->price;
+        const auto matchQty = std::min( order->qty, otherOrder->qty );
 
         order->qty -= matchQty;
         otherOrder->qty -= matchQty;
