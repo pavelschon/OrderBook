@@ -6,22 +6,27 @@
 #include "OrderBook.hpp"
 #include <iostream>
 
+
 /**
  * @brief Create new order
  * 
  */
-void OrderBook::newOrder(const int userId, const int price, const int qty, const char side, const int orderId)
+Response::Type OrderBook::newOrder(const int userId, const int price, const int qty, const char side, const int orderId)
 {
+    Response response;
+    
     switch(side)
     {
         case Order::Side::Buy:
-            newOrderImpl(bidOrders, askOrders, price, qty, side, userId, orderId);
+            newOrderImpl(bidOrders, askOrders, response, price, qty, side, userId, orderId);
             break;
             
         case Order::Side::Sell:
-            newOrderImpl(askOrders, bidOrders, price, qty, side, userId, orderId);
+            newOrderImpl(askOrders, bidOrders, response, price, qty, side, userId, orderId);
             break;
     }
+    
+    return response.get();
 }
 
 
@@ -41,7 +46,7 @@ void OrderBook::cancelOrder(const int userId, const int orderId)
  *
  */
 template<class OrderContainer, class OtherContainer>
-void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherContainer,
+void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherContainer, Response& response,
                              const int price, const int qty, const char side, const int userId, const int orderId)
 {
     const auto order = std::make_shared<Order>(price, qty, side, userId, orderId);
@@ -60,6 +65,8 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
         {
             if(order->qty > 0)
             {
+                response.acknowledge(userId, orderId);
+                
                 //aggregatePriceLevel( orders, order->price, order->side );
                 
                 //logger.debug( format::f2::logTraderAddedOrder, trader->toString(), order->toString() );
@@ -72,6 +79,8 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
             //trader->notifyError( format::f0::orderAlreadyExist.str() );
         }
     }
+    
+    response.topOfBook(container, side);
 }
 
 
@@ -164,4 +173,50 @@ void OrderBook::flush()
         std::cout << "Ask: " << (*askOrders.get<tag::Price>().begin())->getPrice() << "\n";
     }
 }
+
+
+/**
+ * @brief Create top-of-book message
+ *
+ */
+template<class OrderContainer>
+void Response::topOfBook(const OrderContainer& container, const char side)
+{
+    Type topOfBookMessage;
+    
+    topOfBookMessage.append('B');
+    topOfBookMessage.append(side);
+    
+    if(container.size())
+    {
+        const auto& idx = container.template get<tag::Price>();
+        
+        /* best price is the price of the first order */
+        const auto bestPrice = (*idx.begin())->getPrice();
+        
+        /* now get the range of order of this price */
+        const auto end = idx.upper_bound(bestPrice);
+        auto it = idx.lower_bound(bestPrice);
+
+        int qty = 0;
+
+        /* iterate over orders in the price-level range */
+        for(; it != end; ++it )
+        {
+            /* sum-up the quantity */
+            qty += (*it)->getQty();
+        }
+        
+        topOfBookMessage.append(bestPrice);
+        topOfBookMessage.append(qty);
+    }
+    else
+    {
+        topOfBookMessage.append('-');
+        topOfBookMessage.append('-');
+    }
+    
+    payload.append(topOfBookMessage);
+}
+
 

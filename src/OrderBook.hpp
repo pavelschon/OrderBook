@@ -3,7 +3,9 @@
  *
  */
 
-#include "OrderContainer.hpp"
+#pragma once
+
+#include "Response.hpp"
 
 
 class OrderBook
@@ -19,7 +21,7 @@ public:
     OrderBook& operator=(const OrderBook&) = delete;
     
     /* Create new order */
-    void newOrder(const int userId, const int price, const int qty, const char side, const int orderId);
+    Response::Type newOrder(const int userId, const int price, const int qty, const char side, const int orderId);
     
     /* Cancel existing order */
     void cancelOrder(const int userId, const int userOrderId);
@@ -30,7 +32,7 @@ public:
 private:
     /* Create new order */
     template<class OrderContainer, class OtherContainer>
-    static void newOrderImpl(OrderContainer& container, OtherContainer& otherContainer,
+    static void newOrderImpl(OrderContainer& container, OtherContainer& otherContainer, Response& response,
                              const int price, const int qty, const char side, const int userId, const int orderId);
 
     /* Cancel existing order */

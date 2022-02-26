@@ -3,6 +3,8 @@
  *
  */
 
+#pragma once
+
 #include "Order.hpp"
 
 #include <boost/multi_index/composite_key.hpp>
@@ -20,10 +22,10 @@ namespace comparator
 /* higher price first - bid orders */
 using HigherPrice = std::greater<const int>;
 
-/* lower price first - ask orders */
+/* lesser price first - ask orders */
 using LesserPrice = std::less<const int>;
 
-/* lower timestamp first */
+/* lesser timestamp first */
 using LesserTime = std::less<const Order::Time>;
 
 using HigherPriceLesserTime = boost::multi_index::composite_key_compare<HigherPrice, LesserTime>;   /* bid orders */
