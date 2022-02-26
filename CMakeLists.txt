@@ -30,6 +30,7 @@ add_library( orderbook SHARED
     src/OrderBookMain.cpp
     src/OrderBook.cpp
     src/Order.cpp
+    src/Response.cpp
 )
 
 set_target_properties( orderbook PROPERTIES PREFIX "" )

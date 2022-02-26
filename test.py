@@ -9,6 +9,17 @@ buy, sell = 'B', 'S'
 
 
 class TestOrderBook(unittest.TestCase):
+    def assertResult(self, resultA, resultB):
+        self.assertEqual(len(resultA), len(resultB))
+        for messageA, messageB in zip(resultA, resultB):
+            self.assertMessage(messageA, messageB)
+                
+    def assertMessage(self, messageA, messageB):
+        self.assertEqual(len(messageA), len(messageB))
+        for itemA, itemB in zip(messageA, messageB):
+            self.assertEqual(itemA, itemB)
+        
+    
     def testScenario01(self):
         '''scenario1, balanced book'''
         
@@ -16,17 +27,37 @@ class TestOrderBook(unittest.TestCase):
 
         # build book, TOB = 10/11
         # N, 1, IBM, 10, 100, B, 1
-        book.newOrder(userA, 10, 100, buy, 1)
+        self.assertResult(
+            book.newOrder(userA, 10, 100, buy, 1),
+            [[ 'A', 1, 1 ], ['B', 'B', 10, 100]]
+        )
+        
         # N, 1, IBM, 12, 100, S, 2
-        book.newOrder(userA, 12, 100, sell, 2)
+        self.assertResult(
+            book.newOrder(userA, 12, 100, sell, 2),
+            [[ 'A', 1, 2], [ 'B', 'S', 12, 100]]
+        )
+        
+#        print(book.newOrder(userB, 9, 100, buy, 101))
         # N, 2, IBM, 9, 100, B, 101
-        book.newOrder(userB, 9, 100, buy, 101)
+        self.assertResult(
+            book.newOrder(userB, 9, 100, buy, 101),
+            [[ 'A', 2, 101]]
+        )
+        
         # N, 2, IBM, 11, 100, S, 102
-        book.newOrder(userB, 11, 100, sell, 102)
+        self.assertResult(
+            book.newOrder(userB, 11, 100, sell, 102),
+            [[ 'A', 2, 102], ['B', 'S', 11, 100]]
+        )
         
         # hit book on each side, generate trades, TOB = 9/12
         # N, 1, IBM, 11, 100, B, 3
-        book.newOrder(userA, 11, 100, buy, 3)
+        self.assertResult(
+            book.newOrder(userA, 11, 100, buy, 3),
+            [[ 'A', 1, 3], [ 'T', 1, 3, 2, 102, 11, 100 ]]
+        )
+        
         # N, 2, IBM, 10, 100, S, 103
         book.newOrder(userB, 10, 100, sell, 103)
         

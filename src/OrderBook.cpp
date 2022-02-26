@@ -4,7 +4,8 @@
  */
 
 #include "OrderBook.hpp"
-#include <iostream>
+
+#include <boost/optional.hpp>
 
 
 /**
@@ -50,6 +51,14 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
                              const int price, const int qty, const char side, const int userId, const int orderId)
 {
     const auto order = std::make_shared<Order>(price, qty, side, userId, orderId);
+    const auto& idx = container.template get<tag::Price>();
+    boost::optional<int> prevBestPrice;
+    
+    if(container.size())
+    {
+        /* get currect best price */
+        prevBestPrice = (*idx.begin())->price;
+    }
     
     /* full or partial execution */
     execution(otherContainer, order);
@@ -67,20 +76,16 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
             {
                 response.acknowledge(userId, orderId);
                 
-                //aggregatePriceLevel( orders, order->price, order->side );
+                const auto bestPrice = (*idx.begin())->price;
                 
-                //logger.debug( format::f2::logTraderAddedOrder, trader->toString(), order->toString() );
+                /* check if best price has changed */
+                if((!prevBestPrice) || (prevBestPrice.value() != bestPrice))
+                {
+                    response.topOfBook(container, side);
+                }
             }
         }
-        else
-        {
-            //logger.debug( format::f2::logOrderAlreadyExist, trader->toString(), order->orderId );
-
-            //trader->notifyError( format::f0::orderAlreadyExist.str() );
-        }
     }
-    
-    response.topOfBook(container, side);
 }
 
 
@@ -150,7 +155,6 @@ void OrderBook::execution( OrderContainer& container, const Order::SharedPtr& or
 
     if( totalMatchQuantity > 0 )
     {
-        std::cout << "trade: " << totalMatchQuantity << "\n";
     //    aggregateSetPriceLevels( orders, priceLevels, side::opposite( order->side ) );
     }
 }
@@ -163,15 +167,7 @@ void OrderBook::execution( OrderContainer& container, const Order::SharedPtr& or
  */
 void OrderBook::flush()
 {
-    if(bidOrders.size())
-    {
-        std::cout << "Bid: " << (*bidOrders.get<tag::Price>().begin())->getPrice() << "\n";
-    }
-    
-    if(askOrders.size())
-    {
-        std::cout << "Ask: " << (*askOrders.get<tag::Price>().begin())->getPrice() << "\n";
-    }
+
 }
 
 
@@ -194,13 +190,13 @@ void Response::topOfBook(const OrderContainer& container, const char side)
         /* best price is the price of the first order */
         const auto bestPrice = (*idx.begin())->getPrice();
         
-        /* now get the range of order of this price */
+        /* now get the orders-range in this price level */
         const auto end = idx.upper_bound(bestPrice);
         auto it = idx.lower_bound(bestPrice);
 
         int qty = 0;
 
-        /* iterate over orders in the price-level range */
+        /* iterate over orders in the range */
         for(; it != end; ++it )
         {
             /* sum-up the quantity */
