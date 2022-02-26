@@ -32,7 +32,8 @@ public:
     
     /* Create top-of-book message */
     template<class OrderContainer>
-    void topOfBook(const OrderContainer& container, char side);
+    void topOfBook(const OrderContainer& container,
+                   const boost::optional<int>& prevBestPrice, char side);
     
 private:
     Type payload;

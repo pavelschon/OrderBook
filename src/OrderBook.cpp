@@ -49,11 +49,12 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
                              const int price, const int qty, const char side, const int userId, const int orderId)
 {
     const auto order = std::make_shared<Order>(price, qty, side, userId, orderId);
-    const auto& idx = container.template get<tag::Price>();
     
+    /* calculate top-of-book */
     const auto& prevBestPrice = OrderBook::getBestPrice(container);
     const auto& prevBestPriceOther = OrderBook::getBestPrice(otherContainer);
     
+    /* create acknowledge message */
     response.acknowledge(userId, orderId);
     
     /* full or partial execution */
@@ -63,22 +64,16 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
     if(order->qty > 0)
     {
         /* ...insert into orderbook */
-        container.insert(order);
-        
-        const auto& bestPrice = OrderBook::getBestPrice(container);
-        if(bestPrice && ((!prevBestPrice) || prevBestPrice.value() != bestPrice.value()))
+        if(container.insert(order).second)
         {
-            response.topOfBook(container, order->side);
+            /* if inserted, then maybe create top-of-book message */
+            response.topOfBook(container, prevBestPrice, order->side);
         }
     }
     
     if(tradedQty > 0)
     {
-        const auto& bestPrice = OrderBook::getBestPrice(otherContainer);
-        if(bestPrice && ((!prevBestPriceOther) || prevBestPriceOther.value() != bestPrice.value()))
-        {
-            response.topOfBook(otherContainer, order->getOtherSide());
-        }
+        response.topOfBook(otherContainer, prevBestPriceOther, order->getOtherSide());
     }
 }
 
@@ -180,16 +175,23 @@ boost::optional<int> OrderBook::getBestPrice(const OrderContainer& container)
  *
  */
 template<class OrderContainer>
-void Response::topOfBook(const OrderContainer& container, char side)
+void Response::topOfBook(const OrderContainer& container, const boost::optional<int>& prevBestPrice, char side)
 {
+    const auto& bestPrice = OrderBook::getBestPrice(container);
+    
     Type topOfBookMessage;
     
     topOfBookMessage.append('B');
     topOfBookMessage.append(side);
     
-    const auto& bestPrice = OrderBook::getBestPrice(container);
-    
-    if(bestPrice)
+    if(!bestPrice)
+    {
+        topOfBookMessage.append('-');
+        topOfBookMessage.append('-');
+        
+        payload.append(topOfBookMessage);
+    }
+    else if((!prevBestPrice) || prevBestPrice.value() != bestPrice.value())
     {
         const auto& idx = container.template get<tag::Price>();
         
@@ -208,14 +210,9 @@ void Response::topOfBook(const OrderContainer& container, char side)
         
         topOfBookMessage.append(bestPrice.value());
         topOfBookMessage.append(qty);
+        
+        payload.append(topOfBookMessage);
     }
-    else
-    {
-        topOfBookMessage.append('-');
-        topOfBookMessage.append('-');
-    }
-    
-    payload.append(topOfBookMessage);
 }
 
 
