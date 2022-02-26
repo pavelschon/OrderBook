@@ -38,12 +38,11 @@ class TestOrderBook(unittest.TestCase):
             [[ 'A', 1, 2], [ 'B', 'S', 12, 100]]
         )
         
-        print(book.newOrder(userB, 9, 100, buy, 101))
         # N, 2, IBM, 9, 100, B, 101
-#        self.assertResult(
-#            book.newOrder(userB, 9, 100, buy, 101),
-#            [[ 'A', 2, 101]]
-#        )
+        self.assertResult(
+            book.newOrder(userB, 9, 100, buy, 101),
+            [[ 'A', 2, 101]]
+        )
         
         # N, 2, IBM, 11, 100, S, 102
         self.assertResult(

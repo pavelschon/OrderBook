@@ -50,6 +50,7 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
 {
     const auto order = std::make_shared<Order>(price, qty, side, userId, orderId);
     const auto& idx = container.template get<tag::Price>();
+    const auto& prevBestPrice = OrderBook::getBestPrice(container);
     
     response.acknowledge(userId, orderId);
     
@@ -62,7 +63,11 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
         /* ...insert into orderbook */
         container.insert(order);
         
-        response.topOfBook(container, order->side);
+        const auto& bestPrice = OrderBook::getBestPrice(container);
+        if(bestPrice && ((!prevBestPrice) || prevBestPrice.value() != bestPrice.value()))
+        {
+            response.topOfBook(container, order->side);
+        }
     }
 }
 
