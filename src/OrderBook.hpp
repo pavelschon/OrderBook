@@ -7,6 +7,8 @@
 
 #include "Response.hpp"
 
+#include <boost/optional.hpp>
+
 
 class OrderBook
 {
@@ -29,19 +31,23 @@ public:
     /* Flush orderbook */
     void flush();
     
+    /* Get the best price from the order container */
+    template<class OrderContainer>
+    static boost::optional<int> getBestPrice(const OrderContainer& container);
+    
 private:
     /* Create new order */
     template<class OrderContainer, class OtherContainer>
-    static void newOrderImpl(OrderContainer& container, OtherContainer& otherContainer, Response& response,
-                             const int price, const int qty, const char side, const int userId, const int orderId);
+    void newOrderImpl(OrderContainer& container, OtherContainer& otherContainer, Response& response,
+                      const int price, const int qty, const char side, const int userId, const int orderId);
 
     /* Cancel existing order */
     template<class OrderContainer>
-    static void cancelOrderImpl( OrderContainer& container, const int userId, const int orderId );
+    static void cancelOrderImpl(OrderContainer& container, const int userId, const int orderId);
     
     /* Handle order execution (trade) */
     template<class OrderContainer>
-    static void execution( OrderContainer& container, const Order::SharedPtr& order );
+    static int trade(Response& response, OrderContainer& container, const Order::SharedPtr& order);
         
     BidOrderContainer bidOrders;
     AskOrderContainer askOrders;

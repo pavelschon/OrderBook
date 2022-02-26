@@ -35,3 +35,26 @@ void Response::acknowledge(const int userId, const int orderId)
     payload.append(ackMessage);
 }
 
+
+
+/**
+ * @brief Create trade message
+ *
+ */
+void Response::trade(const int userIdBuy, const int orderIdBuy,
+                     const int userIdSell, const int orderIdSell,
+                     const int price, const int quantity )
+{
+    py::list tradeMessage;
+    
+    tradeMessage.append('T');
+    tradeMessage.append(userIdBuy);
+    tradeMessage.append(orderIdBuy);
+    tradeMessage.append(userIdSell);
+    tradeMessage.append(orderIdSell);
+    tradeMessage.append(price);
+    tradeMessage.append(quantity);
+    
+    payload.append(tradeMessage);
+}
+

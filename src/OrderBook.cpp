@@ -5,8 +5,6 @@
 
 #include "OrderBook.hpp"
 
-#include <boost/optional.hpp>
-
 
 /**
  * @brief Create new order
@@ -52,39 +50,19 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
 {
     const auto order = std::make_shared<Order>(price, qty, side, userId, orderId);
     const auto& idx = container.template get<tag::Price>();
-    boost::optional<int> prevBestPrice;
     
-    if(container.size())
-    {
-        /* get currect best price */
-        prevBestPrice = (*idx.begin())->price;
-    }
+    response.acknowledge(userId, orderId);
     
     /* full or partial execution */
-    execution(otherContainer, order);
+    const int tradedQty = trade(response, otherContainer, order);
     
     /* if has resting qty... */
     if(order->qty > 0)
     {
         /* ...insert into orderbook */
-        const auto& result = container.insert(order);
-
-        /* if inserted */
-        if(result.second)
-        {
-            if(order->qty > 0)
-            {
-                response.acknowledge(userId, orderId);
-                
-                const auto bestPrice = (*idx.begin())->price;
-                
-                /* check if best price has changed */
-                if((!prevBestPrice) || (prevBestPrice.value() != bestPrice))
-                {
-                    response.topOfBook(container, side);
-                }
-            }
-        }
+        container.insert(order);
+        
+        response.topOfBook(container, order->side);
     }
 }
 
@@ -94,7 +72,7 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
  * 
  */
 template<class OrderContainer>
-void OrderBook::cancelOrderImpl( OrderContainer& container, const int userId, const int orderId )
+void OrderBook::cancelOrderImpl(OrderContainer& container, const int userId, const int orderId )
 {
     auto& idx = container.template get<tag::UniqueId>();
     const auto it = idx.find(std::make_tuple(userId, orderId));
@@ -104,12 +82,6 @@ void OrderBook::cancelOrderImpl( OrderContainer& container, const int userId, co
         const auto order = *it;
 
         idx.erase( it );
-
-        //trader->notifyCancelOrderSuccess( order->orderId, order->quantity );
-
-        //logger.debug( format::f2::logTraderCanceledOne, trader->toString(), order->toString() );
-
-        //aggregatePriceLevel<OrderContainer>( orders, order->price, order->side );
     }
 }
 
@@ -119,16 +91,14 @@ void OrderBook::cancelOrderImpl( OrderContainer& container, const int userId, co
  * 
  */
 template<class OrderContainer>
-void OrderBook::execution( OrderContainer& container, const Order::SharedPtr& order )
+int OrderBook::trade(Response& response, OrderContainer& container, const Order::SharedPtr& order)
 {
-    //typename OrderContainer::element_type::price_set priceLevels;
-
     auto &idx = container.template get<tag::PriceTime>();
     auto it   = idx.begin();
 
-    int totalMatchQuantity = 0;
+    int tradedQty = 0;
     
-    while( it != idx.end() && order->isExecutableWith( *it ) && order->qty > 0 )
+    while(it != idx.end() && order->isExecutableWith(*it) && order->qty > 0)
     {
         const auto& otherOrder = *it;
         //const auto matchPrice = otherOrder->price;
@@ -136,9 +106,23 @@ void OrderBook::execution( OrderContainer& container, const Order::SharedPtr& or
 
         order->qty -= matchQty;
         otherOrder->qty -= matchQty;
-        totalMatchQuantity += matchQty;
-
-        //priceLevels.insert( matchPrice );
+        tradedQty += matchQty;
+        
+        /* now prepare the trade message */
+        switch(order->side)
+        {
+            case Order::Side::Buy:
+                response.trade(order->userId, order->orderId,
+                               otherOrder->userId, otherOrder->orderId,
+                               otherOrder->price, matchQty);
+                break;
+                
+            case Order::Side::Sell:
+                response.trade(otherOrder->userId, otherOrder->orderId,
+                               order->userId, order->orderId,
+                               otherOrder->price, matchQty);
+                break;
+        }
 
         // other order fully matched, remove it
         if( otherOrder->qty < 1 )
@@ -149,14 +133,73 @@ void OrderBook::execution( OrderContainer& container, const Order::SharedPtr& or
         {
             ++it;
         }
-
-//        notifyExecution( order, otherOrder, matchQty );
     }
+    
+    return tradedQty;
+}
 
-    if( totalMatchQuantity > 0 )
+
+/**
+ * @brief Get the best price from the order container
+ * 
+ */
+template<class OrderContainer>
+boost::optional<int> OrderBook::getBestPrice(const OrderContainer& container)
+{
+    if(container.size())
     {
-    //    aggregateSetPriceLevels( orders, priceLevels, side::opposite( order->side ) );
+        const auto& idx = container.template get<tag::Price>();
+        
+        return (*idx.begin())->price;
     }
+    else
+    {
+        return boost::none;
+    }
+}
+
+
+/**
+ * @brief Create top-of-book message
+ *
+ */
+template<class OrderContainer>
+void Response::topOfBook(const OrderContainer& container, char side)
+{
+    Type topOfBookMessage;
+    
+    topOfBookMessage.append('B');
+    topOfBookMessage.append(side);
+    
+    const auto& bestPrice = OrderBook::getBestPrice(container);
+    
+    if(bestPrice)
+    {
+        const auto& idx = container.template get<tag::Price>();
+        
+        /* now get the orders-range in this price level */
+        const auto end = idx.upper_bound(bestPrice.value());
+        auto it = idx.lower_bound(bestPrice.value());
+
+        int qty = 0;
+
+        /* iterate over orders in the range */
+        for(; it != end; ++it )
+        {
+            /* sum-up the quantity */
+            qty += (*it)->getQty();
+        }
+        
+        topOfBookMessage.append(bestPrice.value());
+        topOfBookMessage.append(qty);
+    }
+    else
+    {
+        topOfBookMessage.append('-');
+        topOfBookMessage.append('-');
+    }
+    
+    payload.append(topOfBookMessage);
 }
 
 
@@ -168,51 +211,6 @@ void OrderBook::execution( OrderContainer& container, const Order::SharedPtr& or
 void OrderBook::flush()
 {
 
-}
-
-
-/**
- * @brief Create top-of-book message
- *
- */
-template<class OrderContainer>
-void Response::topOfBook(const OrderContainer& container, const char side)
-{
-    Type topOfBookMessage;
-    
-    topOfBookMessage.append('B');
-    topOfBookMessage.append(side);
-    
-    if(container.size())
-    {
-        const auto& idx = container.template get<tag::Price>();
-        
-        /* best price is the price of the first order */
-        const auto bestPrice = (*idx.begin())->getPrice();
-        
-        /* now get the orders-range in this price level */
-        const auto end = idx.upper_bound(bestPrice);
-        auto it = idx.lower_bound(bestPrice);
-
-        int qty = 0;
-
-        /* iterate over orders in the range */
-        for(; it != end; ++it )
-        {
-            /* sum-up the quantity */
-            qty += (*it)->getQty();
-        }
-        
-        topOfBookMessage.append(bestPrice);
-        topOfBookMessage.append(qty);
-    }
-    else
-    {
-        topOfBookMessage.append('-');
-        topOfBookMessage.append('-');
-    }
-    
-    payload.append(topOfBookMessage);
 }
 
 
