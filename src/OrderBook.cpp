@@ -79,7 +79,7 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
  * @brief Cancel existing order
  * 
  */
-template<typename OrderContainer>
+template<class OrderContainer>
 void OrderBook::cancelOrderImpl( OrderContainer& container, const int userId, const int orderId )
 {
     auto& idx = container.template get<tag::UniqueId>();
@@ -104,7 +104,7 @@ void OrderBook::cancelOrderImpl( OrderContainer& container, const int userId, co
  * @brief Handle order execution (trade)
  * 
  */
-template<typename OrderContainer>
+template<class OrderContainer>
 void OrderBook::execution( OrderContainer& container, const Order::SharedPtr& order )
 {
     //typename OrderContainer::element_type::price_set priceLevels;
