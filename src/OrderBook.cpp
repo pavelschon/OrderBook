@@ -48,7 +48,7 @@ template<class OrderContainer, class OtherContainer>
 void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherContainer, Response& response,
                              const int price, const int qty, const char side, const int userId, const int orderId)
 {
-    const auto order = std::make_shared<Order>(price, qty, side, userId, orderId);
+    const auto& order = std::make_shared<Order>(price, qty, side, userId, orderId);
     
     /* calculate top-of-book */
     const auto& prevBestPrice = OrderBook::getBestPrice(container);
@@ -86,7 +86,7 @@ template<class OrderContainer>
 void OrderBook::cancelOrderImpl(OrderContainer& container, const int userId, const int orderId )
 {
     auto& idx = container.template get<tag::UniqueId>();
-    const auto it = idx.find(std::make_tuple(userId, orderId));
+    const auto& it = idx.find(std::make_tuple(userId, orderId));
 
     if(it != idx.end())
     {
@@ -102,7 +102,7 @@ void OrderBook::cancelOrderImpl(OrderContainer& container, const int userId, con
 template<class OrderContainer>
 int OrderBook::trade(Response& response, OrderContainer& container, const Order::SharedPtr& order)
 {
-    auto &idx = container.template get<tag::PriceTime>();
+    auto& idx = container.template get<tag::PriceTime>();
     auto it   = idx.begin();
 
     int tradedQty = 0;
@@ -110,7 +110,6 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
     while(it != idx.end() && order->isExecutableWith(*it) && order->qty > 0)
     {
         const auto& otherOrder = *it;
-        //const auto matchPrice = otherOrder->price;
         const auto matchQty = std::min( order->qty, otherOrder->qty );
 
         order->qty -= matchQty;
@@ -118,11 +117,33 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
         tradedQty += matchQty;
         
         /* now prepare the trade message */
-        response.trade(order->userId, order->orderId,
-                       otherOrder->userId, otherOrder->orderId,
-                       otherOrder->price, matchQty);
+        if(order->price > 0)
+        {
+            response.trade(order->userId, order->orderId,
+                           otherOrder->userId, otherOrder->orderId,
+                           otherOrder->price, matchQty);
+        }
+        else
+        {
+            switch(order->side)
+            {
+                case Order::Side::Buy:
+                    response.trade(order->userId, order->orderId,
+                        otherOrder->userId, otherOrder->orderId,
+                        otherOrder->price, matchQty);
+                    
+                    break;
+                    
+                case Order::Side::Sell:
+                    response.trade(
+                        otherOrder->userId, otherOrder->orderId,
+                        order->userId, order->orderId,
+                        otherOrder->price, matchQty);
+                    break;
+            }
+        }
 
-        // other order fully matched, remove it
+        /* other order fully matched, remove it */
         if( otherOrder->qty < 1 )
         {
             idx.erase( it++ );
@@ -183,7 +204,7 @@ void Response::topOfBook(const OrderContainer& container, const boost::optional<
         const auto& idx = container.template get<tag::Price>();
         
         /* now get the orders-range in this price level */
-        const auto end = idx.upper_bound(bestPrice.value());
+        const auto& end = idx.upper_bound(bestPrice.value());
         auto it = idx.lower_bound(bestPrice.value());
 
         int qty = 0;
