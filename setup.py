@@ -24,7 +24,7 @@ remove_unwanted_options()
 orderbook = Extension('orderbook',
     language = 'c++',
     extra_compile_args = [ '-Wall', '-pedantic', '-fPIC', '-std=c++14' ],
-    libraries = [ 'boost_python' ],
+    libraries = [ 'boost_python' + '.'.join(platform.python_version_tuple()[:2]) ],
     include_dirs = [ '/usr/include/python' + '.'.join(platform.python_version_tuple()[:2]), 'src' ],
     sources = (
         glob.glob('src/*.cpp')
