@@ -90,7 +90,6 @@ def read_messages(target):
 
 if __name__ == '__main__':
     # set up processing pipeline
-    
     result_printer = print_result()
     next(result_printer)
     
