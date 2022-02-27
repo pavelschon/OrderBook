@@ -13,12 +13,12 @@ find_package( PythonLibs   "3.5" REQUIRED )
 find_package( PythonInterp "3.5" REQUIRED )
 find_package( Boost COMPONENTS python3 REQUIRED )
 
-#set( PythonPkgPathCmd "import distutils.sysconfig as cfg; print(cfg.get_python_lib())" )
+set( PythonPkgPathCmd "import distutils.sysconfig as cfg; print(cfg.get_python_lib())" )
 
-#execute_process (
-#    COMMAND ${PYTHON_EXECUTABLE} -c "${PythonPkgPathCmd}"
-#    OUTPUT_VARIABLE PythonPkgPath OUTPUT_STRIP_TRAILING_WHITESPACE
-#)
+execute_process (
+    COMMAND ${PYTHON_EXECUTABLE} -c "${PythonPkgPathCmd}"
+    OUTPUT_VARIABLE PythonPkgPath OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -40,58 +40,43 @@ set_target_properties( orderbook PROPERTIES PREFIX "" )
 message( ${Boost_LIBRARIES} )
 target_link_libraries ( orderbook ${Boost_LIBRARIES} )
 
-#install(
-#    TARGETS engine
-#    DESTINATION ${PythonPkgPath}/pyxchange
-#    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ
-#)
+install(
+    TARGETS orderbook
+    DESTINATION ${PythonPkgPath}
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ
+)
 
-#install(
-#    FILES
-#    ${CMAKE_CURRENT_SOURCE_DIR}/README.md
-#    ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
-#    DESTINATION /usr/share/pyxchange
-#    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ
-#)
+install(
+    FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+    DESTINATION /usr/share/orderbook
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ
+)
 
-#install(
-#    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/pyxchange
-#    DESTINATION ${PythonPkgPath}
-#    FILES_MATCHING PATTERN "*.py"
-#    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ
-#)
+install(
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
+    DESTINATION /usr/share/orderbook
+    FILES_MATCHING PATTERN "*.py"
+    PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+)
 
-#install(
-#   DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/examples
-#    DESTINATION /usr/share/pyxchange
-#    FILES_MATCHING PATTERN "*.py"
-#    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ
-#)
+install(
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin
+    DESTINATION /usr
+    FILES_MATCHING PATTERN "*.py"
+    PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+)
 
-#install(
-#    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
-#    DESTINATION /usr/share/pyxchange
-#    FILES_MATCHING PATTERN "*.py"
-#    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ
-#)
+set( CPACK_GENERATOR "DEB" )
 
-#install(
-#    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin
-#    DESTINATION /usr
-#    FILES_MATCHING PATTERN "*.py"
-#    PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-#)
+set( CPACK_PACKAGE_VERSION_MAJOR "1" )
+set( CPACK_PACKAGE_VERSION_MINOR "0" )
+set( CPACK_PACKAGE_VERSION_PATCH "0" )
 
-#set( CPACK_GENERATOR "DEB" )
+set( CPACK_DEBIAN_PACKAGE_DESCRIPTION "Orderbook engine" )
+set( CPACK_DEBIAN_PACKAGE_MAINTAINER "Pavel Schön <pavel@schon.cz>" )
+set( CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/pavelschon/Orderbook.git")
+set( CPACK_DEBIAN_PACKAGE_DEPENDS "python3 (>= 3.5), python3-twisted (>= 16.6), libboost-python${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}" )
+set( CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS "python3-dev (>= 2.7), libboost-all-dev" )
 
-#set( CPACK_PACKAGE_VERSION_MAJOR "0" )
-#set( CPACK_PACKAGE_VERSION_MINOR "1" )
-#set( CPACK_PACKAGE_VERSION_PATCH "0" )
-
-#set( CPACK_DEBIAN_PACKAGE_DESCRIPTION "PyXchange - simulator of limit orderbook" )
-#set( CPACK_DEBIAN_PACKAGE_MAINTAINER "Pavel Schön <pavel@schon.cz>" )
-#set( CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/pavelschon/PyXchange.git")
-#set( CPACK_DEBIAN_PACKAGE_DEPENDS "python (>= 2.7), python (<< 2.8), python-twisted (>= 14.0), libboost-python${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}" )
-#set( CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS "python-dev (>= 2.7), python-dev (<< 2.8), libboost-all-dev" )
-
-#include(CPack)
+include(CPack)
