@@ -3,17 +3,15 @@
 # @brief Streaming wrapper for orderbook module
 #
 # Usage:
-#     ./orderbook_daemon.py < input_file.txt
+#     ./orderbook_streamer.py < input_file.txt
 #
 # or
-#     cat input_file.txt | ./orderbook_daemon.py
+#     cat input_file.txt | ./orderbook_streamer.py
 #
 #
 
-import sys
-import signal
 import orderbook
-            
+
 
 def print_result():
     '''print formatted result to stdout'''
@@ -43,6 +41,8 @@ def dispatch_message(target):
         message_type, *args = (yield).split(',')
         
         if message_type == 'N':
+            # handle new order message
+            
             try:
                 userId, symbol, price, qty, side, orderId = args
                 userId = int(userId)
@@ -57,6 +57,8 @@ def dispatch_message(target):
             target.send(book.newOrder(userId, price, qty, side, orderId))
         
         elif message_type == 'C':
+            # handle cancel order message
+            
             try:
                 userId, orderId = args
                 userId = int(userId)
@@ -68,15 +70,18 @@ def dispatch_message(target):
                 target.send(book.cancelOrder(userId, orderId))
                 
         elif message_type == 'F':
+            # handle flush message
+            
             if book is not None:
                 book.flush()
 
             
 def read_messages(target):
+    '''read messages, skip comments and blank lines'''
+    
     while True:
         message = (yield).strip()
         
-        # skip comments and blank lines
         if not message or message.startswith('#'):
             continue
         
@@ -84,6 +89,8 @@ def read_messages(target):
 
 
 if __name__ == '__main__':
+    # set up processing pipeline
+    
     result_printer = print_result()
     next(result_printer)
     
@@ -93,7 +100,7 @@ if __name__ == '__main__':
     message_reader = read_messages(message_dispatcher)
     next(message_reader)
     
-    i = 0
+    # read from stdin indefinitely
     
     while True:
         try:
