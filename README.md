@@ -18,6 +18,18 @@ $ make -j8 all
 ```
 It creates _orderbook.so_, a python extension module, which can be then imported to python.
 
+
+## Architecture
+* Python API
+* stdin/stdout streamer
+* Twisted TCP/UDP server running streamer subprocess:
+
+```
+ 2417 pts/3    Ss     0:00  |   \_ /bin/bash
+13659 pts/3    R+     0:30  |   |   \_ python3 /usr/bin/orderbook_server.py
+13661 pts/3    S+     0:01  |   |       \_ python3 /usr/bin/orderbook_streamer.py
+```
+
 ## Python API
 The _orderbook_ module exposes single class - _OrderBook_ with instancementhods:
  * newOrder
