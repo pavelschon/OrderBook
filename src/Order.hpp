@@ -14,8 +14,6 @@ class Order
     friend class OrderBook;
     
 public:
-    using SharedPtr = std::shared_ptr<Order>;
-    
     /* ctor */
     Order(const int price_, const int qty_, const char side_, const int userId_, const int orderId_);
     
@@ -26,7 +24,7 @@ public:
     Order& operator=(const Order&) = delete;
     
     /* Check if this order is executable with other order */
-    bool isTradeableWith( const Order::SharedPtr& order ) const;
+    bool isTradeableWith( const OrderPtr& order ) const;
 
     /* Get order time priority */
     Time getTime( void ) const;

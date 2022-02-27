@@ -116,7 +116,7 @@ char Order::getOtherSide() const
  * @brief Check if this order is executable with other order
  * 
  */
-bool Order::isTradeableWith( const Order::SharedPtr& other ) const
+bool Order::isTradeableWith( const OrderPtr& other ) const
 {
     if( ! price)
     {

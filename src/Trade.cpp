@@ -12,7 +12,7 @@
  * 
  */
 template<class OrderContainer>
-int OrderBook::trade(Response& response, OrderContainer& container, const Order::SharedPtr& order)
+int OrderBook::trade(Response& response, OrderContainer& container, const OrderPtr& order)
 {
     auto& idx = container.template get<Tag::PriceTime>();
     auto it   = idx.begin();
@@ -56,6 +56,6 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
 
 
 /* explicitly instantiate template functions */
-template int OrderBook::trade(Response&, BidOrderContainer&, const Order::SharedPtr&);
-template int OrderBook::trade(Response&, AskOrderContainer&, const Order::SharedPtr&);
+template int OrderBook::trade(Response&, BidOrderContainer&, const OrderPtr&);
+template int OrderBook::trade(Response&, AskOrderContainer&, const OrderPtr&);
 

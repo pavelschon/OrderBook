@@ -46,7 +46,7 @@ private:
     
     /* Handle order execution (trade) */
     template<class OrderContainer>
-    static int trade(Response& response, OrderContainer& container, const Order::SharedPtr& order);
+    static int trade(Response& response, OrderContainer& container, const OrderPtr& order);
         
     BidOrderContainer bidOrders;
     AskOrderContainer askOrders;
