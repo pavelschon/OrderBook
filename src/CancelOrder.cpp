@@ -34,8 +34,17 @@ void OrderBook::cancelOrderImpl(Response& response, OrderContainer& container, c
 
     if(it != idx.end())
     {
-        
+        /* calculate top-of-book */
+        const auto& prevTopOfBook = OrderBook::getTopOfBook(container);
+        const auto order = *it; /* no reference, but copy! */
+    
         idx.erase(it);
+        
+        /* create acknowledge message */
+        response.acknowledge(order->userId, order->orderId);
+        
+        /* create top-of-book message */
+        response.topOfBook(container, prevTopOfBook, order->side);
     }
 }
 

@@ -661,15 +661,15 @@ class TestOrderBook(unittest.TestCase):
              [ 'B', 'S', 11, 100 ]])
 
         # cancel orders, TOB = 10/11
-        book.cancelOrder(userA, 2)
         # C, 1, 2
-        #self.assertEqual(
-        #    book.cancelOrder(userA, 2),
-        #    [[ 'C', 1, 2, 3 ],
-        #     [ 'A', 1, 3 ]])
+        self.assertEqual(
+            book.cancelOrder(userA, 2),
+            [[ 'A', 1, 2 ]])
         
         # C, 2, 101
-        book.cancelOrder(userB, 101)
+        self.assertEqual(
+            book.cancelOrder(userB, 101),
+            [['A', 2, 101 ]])
         
         # F
         book.flush()
@@ -706,10 +706,16 @@ class TestOrderBook(unittest.TestCase):
 
         # cancel all bids, TOB = -/11
         # C, 1, 1
-        book.cancelOrder(userA, 1)
+        self.assertEqual(
+            book.cancelOrder(userA, 1),
+            [[ 'A', 1, 1 ],
+             [ 'B', 'B', 9, 100 ]])
         
         # C, 2, 101
-        book.cancelOrder(userB, 101)
+        self.assertEqual(
+            book.cancelOrder(userB, 101),
+            [[ 'A', 2, 101 ],
+             [ 'B', 'B', '-', '-' ]])
         
         # F
         book.flush()
