@@ -3,3 +3,6 @@ obj-*
 *.pyo
 *~
 *swp
+build
+dist
+orderbook.egg-info

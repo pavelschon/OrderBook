@@ -37,7 +37,6 @@ add_library( orderbook SHARED
 )
 
 set_target_properties( orderbook PROPERTIES PREFIX "" )
-message( ${Boost_LIBRARIES} )
 target_link_libraries ( orderbook ${Boost_LIBRARIES} )
 
 install(
@@ -77,6 +76,6 @@ set( CPACK_DEBIAN_PACKAGE_DESCRIPTION "Orderbook engine" )
 set( CPACK_DEBIAN_PACKAGE_MAINTAINER "Pavel Schön <pavel@schon.cz>" )
 set( CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/pavelschon/Orderbook.git")
 set( CPACK_DEBIAN_PACKAGE_DEPENDS "python3 (>= 3.5), python3-twisted (>= 16.6), libboost-python${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}" )
-set( CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS "python3-dev (>= 2.7), libboost-all-dev" )
+set( CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS "g++, python3-dev (>= 3.5), libboost-all-dev" )
 
 include(CPack)
