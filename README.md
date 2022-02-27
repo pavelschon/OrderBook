@@ -170,3 +170,13 @@ $ orderbook_server.py
 2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] A, 2, 103
 2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] T, 1, 1, 2, 103, 10, 100
 ```
+
+## Notes and ideas for enhancements
+* Use strong types in C++ like Price, Quantity etc, in order to avoid mismatch.
+* Use PyBind11 instead of Boost Python
+* Implement _modifyOrder_ message
+* Distinguish public (market-data) and private messages
+* Publish output messages to the (TCP) client
+* Publish output messages via UDP multicast
+* _cancelOrder_ message was not explained in ProgrammingExcercise.docx thus I implemented it according to my best experience.
+* I've found few errors in outputFile.csv, which seems like copy-paste errors, e.g. swapped price and quantity.
