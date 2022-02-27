@@ -24,7 +24,7 @@ The _orderbook_ module exposes single class - _OrderBook_ with instancementhods:
  * cancelOrder
  * flush
 
-In the obj-debug folder:
+In the obj-debug folder (scenario 10):
 ```python
 $ python3
 Python 3.5.3 (default, Jul  9 2020, 13:00:10) 
@@ -50,6 +50,8 @@ Type "help", "copyright", "credits" or "license" for more information.
 ```
 
 ## Unit test
+Unit test of the Python API implements scenarios 1-16 from the provided input and output files.
+
 In the obj-debug folder:
 
 ```
@@ -61,7 +63,19 @@ Ran 16 tests in 0.004s
 OK
 ```
 
+## Performance test
+Performance test implements random transactions.
+
+In the obj-debug folder:
+
+```
+$ ../test/orderbook_perftest.py  
+Processed 100000 transactions in 5.980295181274414 seconds
+```
+
 ## Streaming
+The script _orderbook_streamer.py_ implements message parser from stdin, dispatch messages, call _orderbook_ API and format output messages to stdout.
+
 In the obj-debug folder:
 ```
 $ cat input.txt | ../bin/orderbook_streamer.py
