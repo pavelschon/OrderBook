@@ -14,21 +14,22 @@ In the project folder:
 $ mkdir obj-debug
 $ cd obj-debug
 $ cmake ..
-$ make -j8 all
+$ make -j8 install
 ```
-It creates _orderbook.so_, a python extension module, which can be then imported to python.
+On Debian/Ubuntu distro, run:
+```
+$ make -j8 package
+$ dpkg -i orderbook-1.0.0-Linux.deb
+$ apt-get install --fix-missing
+```
+
+Hint: compiled extension module (_orderbook.so_) must be on PYTHONPATH in order to be importable to python.
 
 
 ## Architecture
 * Python API
 * stdin/stdout streamer
-* Twisted TCP/UDP server running streamer subprocess:
-
-```
- 2417 pts/3    Ss     0:00  |   \_ /bin/bash
-13659 pts/3    R+     0:30  |   |   \_ python3 /usr/bin/orderbook_server.py
-13661 pts/3    S+     0:01  |   |       \_ python3 /usr/bin/orderbook_streamer.py
-```
+* Twisted TCP/UDP server running streamer subprocess
 
 ## Python API
 The _orderbook_ module exposes single class - _OrderBook_ with instancementhods:
@@ -67,7 +68,7 @@ Unit test of the Python API implements scenarios 1-16 from the provided input an
 In the obj-debug folder:
 
 ```
-$ ../test/orderbook_unittest.py 
+$ /usr/share/orderbook/test/orderbook_unittest.py
 ................
 ----------------------------------------------------------------------
 Ran 16 tests in 0.004s
@@ -81,16 +82,16 @@ Performance test implements random transactions.
 In the obj-debug folder:
 
 ```
-$ ../test/orderbook_perftest.py  
-Processed 100000 transactions in 5.980295181274414 seconds
+$ /usr/share/orderbook/test/orderbook_perftest.py 
+Processed 100000 transactions in 4.149225950241089 seconds
 ```
 
-## Streaming
+## Streaming via stdin
 The script _orderbook_streamer.py_ implements message parser from stdin, dispatch messages, call _orderbook_ API and format output messages to stdout.
 
 In the obj-debug folder:
 ```
-$ cat input.txt | ../bin/orderbook_streamer.py
+$ cat input.csv ../bin/orderbook_streamer.py
 A, 1, 1
 B, B, 10, 100
 A, 1, 2
@@ -127,4 +128,52 @@ A, 2, 102
 B, S, 11, 100
 A, 1, 103
 T, 1, 103, 2, 102, 11, 100
+```
+
+## Running TCP/UDP server
+```
+$ orderbook_server.py 
+2022-02-27T23:15:23+0000 [__main__#info] Starting orderbook streamer subprocess: /usr/bin/orderbook_streamer.py
+```
+
+Check how the process tree looks:
+```
+$ ps f
+  PID TTY      STAT   TIME COMMAND
+13706 pts/3    Ss     0:00 -bash
+13712 pts/3    R+     0:00  \_ ps f
+ 5304 pts/2    Ss     0:00 -bash
+13697 pts/2    S+     0:00  \_ python3 /usr/bin/orderbook_server.py
+13698 pts/2    S+     0:00      \_ python3 /usr/bin/orderbook_streamer.py
+```
+
+Send messages via network:
+```
+cat input.csv | netcat -u 192.168.110.22 1234
+```
+
+```
+$ orderbook_server.py 
+2022-02-27T23:15:23+0000 [__main__#info] Starting orderbook streamer subprocess: /usr/bin/orderbook_streamer.py
+2022-02-27T23:18:35+0000 [__main__.OrderBookTCP#info] 192.168.100.4:43180 connected
+2022-02-27T23:18:35+0000 [__main__.OrderBookTCP#info] Input: #scenario1, balanced book
+2022-02-27T23:18:35+0000 [__main__.OrderBookTCP#info] Input: 
+2022-02-27T23:18:35+0000 [__main__.OrderBookTCP#info] Input: # build book, TOB = 10/11
+2022-02-27T23:18:35+0000 [__main__.OrderBookTCP#info] Input: N, 1, IBM, 10, 100, B, 1
+2022-02-27T23:18:35+0000 [__main__.OrderBookTCP#info] Input: N, 1, IBM, 12, 100, S, 2
+2022-02-27T23:18:35+0000 [__main__.OrderBookTCP#info] Input: N, 2, IBM, 9, 100, B, 101
+2022-02-27T23:18:35+0000 [__main__.OrderBookTCP#info] Input: N, 2, IBM, 11, 100, S, 102
+<<snip>>
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] A, 1, 1
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] B, B, 10, 100
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] A, 1, 2
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] B, S, 12, 100
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] A, 2, 101
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] A, 2, 102
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] B, S, 11, 100
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] A, 1, 3
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] T, 1, 3, 2, 102, 11, 100
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] B, S, 12, 100
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] A, 2, 103
+2022-02-27T23:18:35+0000 [__main__.OrderBookSubprocess#info] T, 1, 1, 2, 103, 10, 100
 ```
