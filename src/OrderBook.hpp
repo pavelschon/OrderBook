@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include "Response.hpp"
+#include "OrderBookFwd.hpp"
+#include "OrderContainer.hpp"
 
 #include <boost/optional.hpp>
 

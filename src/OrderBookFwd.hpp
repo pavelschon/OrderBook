@@ -16,8 +16,11 @@ using PyList = boost::python::list;
 using UniqueId = std::tuple<int, int>;
 using Time = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
+class Orderbook;
+class Order;
+class Response;
 
-/* side helper */
+
 namespace Side
 {
     static const char Buy = 'B';

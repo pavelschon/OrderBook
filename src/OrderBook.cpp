@@ -4,156 +4,7 @@
  */
 
 #include "OrderBook.hpp"
-
-
-/**
- * @brief Create new order
- * 
- */
-PyList OrderBook::newOrder(const int userId, const int price, const int qty, const char side, const int orderId)
-{
-    Response response;
-    
-    switch(side)
-    {
-        case Side::Buy:
-            newOrderImpl(bidOrders, askOrders, response, price, qty, side, userId, orderId);
-            break;
-            
-        case Side::Sell:
-            newOrderImpl(askOrders, bidOrders, response, price, qty, side, userId, orderId);
-            break;
-    }
-    
-    return response.get();
-}
-
-
-/**
- * @brief Cancel existing order
- * 
- */
-PyList OrderBook::cancelOrder(const int userId, const int orderId)
-{
-    Response response;
-    
-    cancelOrderImpl(response, bidOrders, userId, orderId);
-    cancelOrderImpl(response, askOrders, userId, orderId);
-    
-    return response.get();
-}
-
-
-/**
- * @brief Create new order
- *
- */
-template<class OrderContainer, class OtherContainer>
-void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherContainer, Response& response,
-                             const int price, const int qty, const char side, const int userId, const int orderId)
-{
-    const auto& order = std::make_shared<Order>(price, qty, side, userId, orderId);
-    
-    /* calculate top-of-book */
-    const auto& prevTopOfBook = OrderBook::getTopOfBook(container);
-    const auto& prevTopOfBookOther = OrderBook::getTopOfBook(otherContainer);
-    
-    /* create acknowledge message */
-    response.acknowledge(userId, orderId);
-    
-    /* full or partial execution */
-    const int tradedQty = trade(response, otherContainer, order);
-    
-    /* if has resting qty... */
-    if(order->qty > 0)
-    {
-        /* ...insert into orderbook */
-        if(container.insert(order).second)
-        {
-            /* if inserted, then maybe create top-of-book message */
-            response.topOfBook(container, prevTopOfBook, order->side);
-        }
-    }
-    
-    if(tradedQty > 0)
-    {
-        response.topOfBook(otherContainer, prevTopOfBookOther, order->getOtherSide());
-    }
-}
-
-
-/**
- * @brief Cancel existing order
- * 
- */
-template<class OrderContainer>
-void OrderBook::cancelOrderImpl(Response& response, OrderContainer& container, const int userId, const int orderId )
-{
-    auto& idx = container.template get<Tag::UniqueId>();
-    const auto& it = idx.find(std::make_tuple(userId, orderId));
-
-    if(it != idx.end())
-    {
-        
-        idx.erase(it);
-    }
-}
-
-
-/**
- * @brief Handle order execution (trade)
- * 
- */
-template<class OrderContainer>
-int OrderBook::trade(Response& response, OrderContainer& container, const Order::SharedPtr& order)
-{
-    auto& idx = container.template get<Tag::PriceTime>();
-    auto it   = idx.begin();
-
-    int tradedQty = 0;
-    
-    while(it != idx.end() && order->isExecutableWith(*it) && order->qty > 0)
-    {
-        const auto& otherOrder = *it;
-        const auto matchQty = std::min(order->qty, otherOrder->qty);
-
-        order->qty -= matchQty;
-        otherOrder->qty -= matchQty;
-        tradedQty += matchQty;
-        
-        /* now prepare the trade message */
-        switch(order->side)
-        {
-            case Side::Buy:
-                response.trade(
-                    order->userId, order->orderId,
-                    otherOrder->userId, otherOrder->orderId,
-                    otherOrder->price, matchQty);
-                
-                break;
-                
-            case Side::Sell:
-                response.trade(
-                    otherOrder->userId, otherOrder->orderId,
-                    order->userId, order->orderId,
-                    otherOrder->price, matchQty);
-                
-                break;
-        }
-
-        /* other order fully matched, remove it */
-        if( otherOrder->qty < 1 )
-        {
-            idx.erase( it++ );
-        }
-        else
-        {
-            ++it;
-        }
-    }
-    
-    return tradedQty;
-}
+#include "Response.hpp"
 
 
 /**
@@ -188,36 +39,9 @@ TopOfBook::Optional OrderBook::getTopOfBook(const OrderContainer& container)
 }
 
 
-/**
- * @brief Create top-of-book message
- *
- */
-template<class OrderContainer>
-void Response::topOfBook(const OrderContainer& container, const TopOfBook::Optional& prevTopOfBook, char side)
-{
-    const auto& topOfBook = OrderBook::getTopOfBook(container);
-    
-    PyList topOfBookMessage;
-    
-    topOfBookMessage.append('B');
-    topOfBookMessage.append(side);
-    
-    if(!topOfBook)
-    {
-        topOfBookMessage.append('-');
-        topOfBookMessage.append('-');
-        
-        payload.append(topOfBookMessage);
-    }
-    else if((!prevTopOfBook) || (prevTopOfBook.value() != topOfBook.value()))
-    {
-        topOfBookMessage.append(topOfBook.value().price);
-        topOfBookMessage.append(topOfBook.value().qty);
-        
-        payload.append(topOfBookMessage);
-    }
-}
-
+/* explicitly instantiate template functions */
+template TopOfBook::Optional OrderBook::getTopOfBook(const BidOrderContainer&);
+template TopOfBook::Optional OrderBook::getTopOfBook(const AskOrderContainer&);
 
 
 /**
@@ -229,5 +53,4 @@ void OrderBook::flush()
     bidOrders.clear();
     askOrders.clear();
 }
-
 

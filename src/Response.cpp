@@ -3,6 +3,7 @@
  *
  */
 
+#include "OrderBook.hpp"
 #include "Response.hpp"
 
 
@@ -53,4 +54,42 @@ void Response::trade(const int userIdBuy, const int orderIdBuy,
     
     payload.append(tradeMessage);
 }
+
+
+/**
+ * @brief Create top-of-book message
+ *
+ */
+template<class OrderContainer>
+void Response::topOfBook(const OrderContainer& container, const TopOfBook::Optional& prevTopOfBook, char side)
+{
+    const auto& topOfBook = OrderBook::getTopOfBook(container);
+    
+    PyList topOfBookMessage;
+    
+    topOfBookMessage.append('B');
+    topOfBookMessage.append(side);
+    
+    if(!topOfBook)
+    {
+        topOfBookMessage.append('-');
+        topOfBookMessage.append('-');
+        
+        payload.append(topOfBookMessage);
+    }
+    else if((!prevTopOfBook) || (prevTopOfBook.value() != topOfBook.value()))
+    {
+        topOfBookMessage.append(topOfBook.value().price);
+        topOfBookMessage.append(topOfBook.value().qty);
+        
+        payload.append(topOfBookMessage);
+    }
+}
+
+
+/* explicitly instantiate template functions */
+template void Response::topOfBook(const BidOrderContainer&, const TopOfBook::Optional&, char);
+template void Response::topOfBook(const AskOrderContainer&, const TopOfBook::Optional&, char);
+
+
 

@@ -30,6 +30,9 @@ add_library( orderbook SHARED
     src/OrderBookMain.cpp
     src/OrderBook.cpp
     src/Order.cpp
+    src/NewOrder.cpp
+    src/CancelOrder.cpp
+    src/Trade.cpp
     src/Response.cpp
 )
 
