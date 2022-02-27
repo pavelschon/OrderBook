@@ -26,7 +26,7 @@ public:
     Order& operator=(const Order&) = delete;
     
     /* Check if this order is executable with other order */
-    bool isExecutableWith( const Order::SharedPtr& order ) const;
+    bool isTradeableWith( const Order::SharedPtr& order ) const;
 
     /* Get order time priority */
     Time getTime( void ) const;
@@ -42,6 +42,9 @@ public:
     
     /* Get order user id */
     int getUserId( void ) const;
+    
+    /* Get order id */
+    int getOrderId( void ) const;
     
     /* get side of this order */
     char getSide() const;

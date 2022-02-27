@@ -72,6 +72,15 @@ int Order::getUserId() const
 }
 
 
+/**
+ * @brief Get order user id
+ * 
+ */
+int Order::getOrderId() const
+{
+    return orderId;
+}
+
 
 /**
  * @brief get side of this order
@@ -107,7 +116,7 @@ char Order::getOtherSide() const
  * @brief Check if this order is executable with other order
  * 
  */
-bool Order::isExecutableWith( const Order::SharedPtr& other ) const
+bool Order::isTradeableWith( const Order::SharedPtr& other ) const
 {
     if( ! price)
     {

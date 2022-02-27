@@ -42,11 +42,11 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
     const auto& prevTopOfBook = OrderBook::getTopOfBook(container);
     const auto& prevTopOfBookOther = OrderBook::getTopOfBook(otherContainer);
     
-    /* create acknowledge message */
-    response.acknowledge(userId, orderId);
- 
     /* create new order */
     const auto& order = std::make_shared<Order>(price, qty, side, userId, orderId);
+    
+    /* create acknowledge message */
+    response.acknowledge(order);
     
     /* full or partial execution */
     const auto tradedQty = trade(response, otherContainer, order);

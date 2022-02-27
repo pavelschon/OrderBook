@@ -6,7 +6,6 @@
 #pragma once
 
 #include "OrderBookFwd.hpp"
-#include "OrderContainer.hpp"
 
 #include <boost/python/list.hpp>
 #include <boost/optional.hpp>
@@ -21,16 +20,16 @@ public:
     PyList get() const;
     
     /* Create acknowledge message */
-    void acknowledge(const int userId, const int orderId);
+    void acknowledge(const OrderConstPtr& order);
     
     /* Create acknowledge message */
     void cancel(const int userId, const int orderId);
     
     
     /* Create trade message */
-    void trade(const int userIdBuy, const int orderIdBuy,
-               const int userIdSell, const int orderIdSell,
-               const int price, const int quantity );
+    void trade(const OrderConstPtr& bidOrder,
+               const OrderConstPtr& askOrder,
+               const int matchPrice, const int matchQty);
     
     /* Create top-of-book message */
     template<class OrderContainer>

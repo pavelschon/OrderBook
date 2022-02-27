@@ -3,8 +3,10 @@
  *
  */
 
-#include "OrderBook.hpp"
 #include "Response.hpp"
+#include "OrderBook.hpp"
+#include "OrderContainer.hpp"
+#include "Order.hpp"
 
 
 /**
@@ -21,13 +23,13 @@ PyList Response::get() const
  * @brief Create acknowledge message
  * 
  */
-void Response::acknowledge(const int userId, const int orderId)
+void Response::acknowledge(const OrderConstPtr& order)
 {
     PyList ackMessage;
     
     ackMessage.append('A');
-    ackMessage.append(userId);
-    ackMessage.append(orderId);
+    ackMessage.append(order->getUserId());
+    ackMessage.append(order->getOrderId());
     
     payload.append(ackMessage);
 }
@@ -38,19 +40,17 @@ void Response::acknowledge(const int userId, const int orderId)
  * @brief Create trade message
  *
  */
-void Response::trade(const int userIdBuy, const int orderIdBuy,
-                     const int userIdSell, const int orderIdSell,
-                     const int price, const int quantity )
+void Response::trade(const OrderConstPtr& bidOrder, const OrderConstPtr& askOrder, const int matchPrice, const int matchQty)
 {
     PyList tradeMessage;
     
     tradeMessage.append('T');
-    tradeMessage.append(userIdBuy);
-    tradeMessage.append(orderIdBuy);
-    tradeMessage.append(userIdSell);
-    tradeMessage.append(orderIdSell);
-    tradeMessage.append(price);
-    tradeMessage.append(quantity);
+    tradeMessage.append(bidOrder->getUserId());
+    tradeMessage.append(bidOrder->getOrderId());
+    tradeMessage.append(askOrder->getUserId());
+    tradeMessage.append(askOrder->getOrderId());
+    tradeMessage.append(matchPrice);
+    tradeMessage.append(matchQty);
     
     payload.append(tradeMessage);
 }

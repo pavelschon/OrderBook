@@ -41,7 +41,7 @@ void OrderBook::cancelOrderImpl(Response& response, OrderContainer& container, c
         idx.erase(it);
         
         /* create acknowledge message */
-        response.acknowledge(order->userId, order->orderId);
+        response.acknowledge(order);
         
         /* create top-of-book message */
         response.topOfBook(container, prevTopOfBook, order->side);

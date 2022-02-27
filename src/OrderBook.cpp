@@ -4,7 +4,6 @@
  */
 
 #include "OrderBook.hpp"
-#include "Response.hpp"
 
 
 /**

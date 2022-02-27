@@ -19,7 +19,7 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
 
     int tradedQty = 0;
     
-    while(it != idx.end() && order->isExecutableWith(*it) && order->qty > 0)
+    while(it != idx.end() && order->isTradeableWith(*it) && order->qty > 0)
     {
         const auto& otherOrder = *it;
         const auto matchQty = std::min(order->qty, otherOrder->qty);
@@ -32,19 +32,11 @@ int OrderBook::trade(Response& response, OrderContainer& container, const Order:
         switch(order->side)
         {
             case Side::Buy:
-                response.trade(
-                    order->userId, order->orderId,
-                    otherOrder->userId, otherOrder->orderId,
-                    otherOrder->price, matchQty);
-                
+                response.trade(order, otherOrder, otherOrder->price, matchQty);
                 break;
                 
             case Side::Sell:
-                response.trade(
-                    otherOrder->userId, otherOrder->orderId,
-                    order->userId, order->orderId,
-                    otherOrder->price, matchQty);
-                
+                response.trade(otherOrder, order, otherOrder->price, matchQty);
                 break;
         }
 
