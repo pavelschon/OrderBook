@@ -1,5 +1,5 @@
 # OrderBook
-OrderBook implementation in C++17 and Python 3
+OrderBook implementation in C++14 and Python 3
 
 ## Dependencies
 
@@ -11,14 +11,19 @@ OrderBook implementation in C++17 and Python 3
 
 In the project folder:
 ```
-mkdir obj-debug
-cd obj-debug
-cmake ..
-make -j8 all
+$ mkdir obj-debug
+$ cd obj-debug
+$ cmake ..
+$ make -j8 all
 ```
-It creates orderbook.so (python module).
+It creates _orderbook.so_, a python extension module, which can be then imported to python.
 
 ## Python API
+The _orderbook_ module exposes single class - _OrderBook_ with instancementhods:
+ * newOrder
+ * cancelOrder
+ * flush
+
 In the obj-debug folder:
 ```python
 $ python3
@@ -42,6 +47,18 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> book.cancelOrder(1, 2)
 [['A', 1, 2], ['B', 'S', '-', '-']]
 >>> book.flush()
+```
+
+## Unit test
+In the obj-debug folder:
+
+```
+$ ../test/orderbook_unittest.py 
+................
+----------------------------------------------------------------------
+Ran 16 tests in 0.004s
+
+OK
 ```
 
 ## Streaming
