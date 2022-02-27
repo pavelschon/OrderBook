@@ -4,7 +4,7 @@ OrderBook implementation in C++14 and Python 3
 ## Dependencies
 
 * Boost (particulary Boost Python and Boost Multi-Index container)
-* Python 3.5+
+* Python3-Twisted
 * CMake
 
 ## Build
