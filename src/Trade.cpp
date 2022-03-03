@@ -12,36 +12,39 @@
  * 
  */
 template<class OrderContainer>
-int OrderBook::trade(Response& response, OrderContainer& container, const OrderPtr& order)
+int OrderBook::trade(Response& response, OrderContainer& container, Order& order)
 {
     auto& idx = container.template get<Tag::PriceTime>();
     auto it   = idx.begin();
 
     int tradedQty = 0;
     
-    while(it != idx.end() && order->isTradeableWith(*it) && order->qty > 0)
+    while(it != idx.end() && order.isTradeableWith(*it) && order.qty > 0)
     {
-        const auto& otherOrder = *it;
-        const auto matchQty = std::min(order->qty, otherOrder->qty);
+        const auto matchQty = std::min(order.qty, it->qty);
 
-        order->qty -= matchQty;
-        otherOrder->qty -= matchQty;
+        order.qty -= matchQty;
+        
+        container.modify(it, [matchQty](Order& other) {
+            other.qty -= matchQty;
+        });
+        
         tradedQty += matchQty;
         
         /* now prepare the trade message */
-        switch(order->side)
+        switch(order.side)
         {
             case Side::Buy:
-                response.trade(order, otherOrder, otherOrder->price, matchQty);
+                response.trade(order, *it, it->price, matchQty);
                 break;
                 
             case Side::Sell:
-                response.trade(otherOrder, order, otherOrder->price, matchQty);
+                response.trade(*it, order, it->price, matchQty);
                 break;
         }
 
         /* other order fully matched, remove it */
-        if( otherOrder->qty < 1 )
+        if( it->qty < 1 )
         {
             idx.erase( it++ );
         }
@@ -56,6 +59,6 @@ int OrderBook::trade(Response& response, OrderContainer& container, const OrderP
 
 
 /* explicitly instantiate template functions */
-template int OrderBook::trade(Response&, BidOrderContainer&, const OrderPtr&);
-template int OrderBook::trade(Response&, AskOrderContainer&, const OrderPtr&);
+template int OrderBook::trade(Response&, BidOrderContainer&, Order&);
+template int OrderBook::trade(Response&, AskOrderContainer&, Order&);
 

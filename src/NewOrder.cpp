@@ -43,7 +43,7 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
     const auto& prevTopOfBookOther = OrderBook::getTopOfBook(otherContainer);
     
     /* create new order */
-    const auto& order = std::make_shared<Order>(price, qty, side, userId, orderId);
+    Order order{ price, qty, side, userId, orderId };
     
     /* create acknowledge message */
     response.acknowledge(order);
@@ -52,13 +52,13 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
     const auto tradedQty = trade(response, otherContainer, order);
     
     /* if has resting qty... */
-    if(order->qty > 0)
+    if(order.qty > 0)
     {
         /* ...insert passive order into orderbook */
         if(container.insert(order).second)
         {
             /* if inserted, then maybe create top-of-book message */
-            response.topOfBook(container, prevTopOfBook, order->side);
+            response.topOfBook(container, prevTopOfBook, order.side);
         }
         /*
         else
@@ -71,7 +71,7 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
     
     if(tradedQty > 0)
     {
-        response.topOfBook(otherContainer, prevTopOfBookOther, order->getOtherSide());
+        response.topOfBook(otherContainer, prevTopOfBookOther, order.getOtherSide());
     }
 }
 

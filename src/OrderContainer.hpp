@@ -61,7 +61,7 @@ using ComparePrice = typename boost::tuples::element<0,
 
 template<typename ComparePriceTime>
 using OrderContainerImpl = boost::multi_index::multi_index_container<
-    OrderPtr, boost::multi_index::indexed_by<
+    Order, boost::multi_index::indexed_by<
 
         /* iterate orders in a match event */
         boost::multi_index::ordered_unique<

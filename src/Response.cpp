@@ -23,13 +23,13 @@ PyList Response::get() const
  * @brief Create acknowledge message
  * 
  */
-void Response::acknowledge(const OrderConstPtr& order)
+void Response::acknowledge(const Order& order)
 {
     PyList ackMessage;
     
     ackMessage.append('A');
-    ackMessage.append(order->getUserId());
-    ackMessage.append(order->getOrderId());
+    ackMessage.append(order.getUserId());
+    ackMessage.append(order.getOrderId());
     
     payload.append(ackMessage);
 }
@@ -40,15 +40,15 @@ void Response::acknowledge(const OrderConstPtr& order)
  * @brief Create trade message
  *
  */
-void Response::trade(const OrderConstPtr& bidOrder, const OrderConstPtr& askOrder, const int matchPrice, const int matchQty)
+void Response::trade(const Order& bidOrder, const Order& askOrder, const int matchPrice, const int matchQty)
 {
     PyList tradeMessage;
     
     tradeMessage.append('T');
-    tradeMessage.append(bidOrder->getUserId());
-    tradeMessage.append(bidOrder->getOrderId());
-    tradeMessage.append(askOrder->getUserId());
-    tradeMessage.append(askOrder->getOrderId());
+    tradeMessage.append(bidOrder.getUserId());
+    tradeMessage.append(bidOrder.getOrderId());
+    tradeMessage.append(askOrder.getUserId());
+    tradeMessage.append(askOrder.getOrderId());
     tradeMessage.append(matchPrice);
     tradeMessage.append(matchQty);
     

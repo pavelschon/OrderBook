@@ -16,7 +16,7 @@ TopOfBook::Optional OrderBook::getTopOfBook(const OrderContainer& container)
     if(container.size())
     {
         const auto& idx = container.template get<Tag::Price>();
-        const auto bestPrice = (*idx.begin())->price;
+        const auto bestPrice = idx.begin()->price;
         const auto& end = idx.upper_bound(bestPrice);
         auto it = idx.lower_bound(bestPrice);
 
@@ -26,7 +26,7 @@ TopOfBook::Optional OrderBook::getTopOfBook(const OrderContainer& container)
         for(; it != end; ++it )
         {
             /* sum-up the quantity */
-            qty += (*it)->getQty();
+            qty += it->getQty();
         }
         
         return TopOfBook{ bestPrice, qty };

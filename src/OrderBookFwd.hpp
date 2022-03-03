@@ -20,9 +20,6 @@ class Orderbook;
 class Order;
 class Response;
 
-using OrderPtr = std::shared_ptr<Order>;
-using OrderConstPtr = std::shared_ptr<Order const>;
-
 
 namespace Side
 {

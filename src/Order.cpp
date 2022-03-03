@@ -116,20 +116,20 @@ char Order::getOtherSide() const
  * @brief Check if this order is executable with other order
  * 
  */
-bool Order::isTradeableWith( const OrderPtr& other ) const
+bool Order::isTradeableWith( const Order& other ) const
 {
     if( ! price)
     {
         // I'm market order
         return true;
     }
-    else if(side == Side::Buy && other->side == Side::Sell)
+    else if(side == Side::Buy && other.side == Side::Sell)
     {
-        return price >= other->price;
+        return price >= other.price;
     }
-    else if(side == Side::Sell && other->side == Side::Buy)
+    else if(side == Side::Sell && other.side == Side::Buy)
     {
-        return price <= other->price;
+        return price <= other.price;
     }
     else
     {

@@ -20,15 +20,12 @@ public:
     PyList get() const;
     
     /* Create acknowledge message */
-    void acknowledge(const OrderConstPtr& order);
-    
-    /* Create acknowledge message */
-    void cancel(const int userId, const int orderId);
+    void acknowledge(const Order& order);
     
     
     /* Create trade message */
-    void trade(const OrderConstPtr& bidOrder,
-               const OrderConstPtr& askOrder,
+    void trade(const Order& bidOrder,
+               const Order& askOrder,
                const int matchPrice, const int matchQty);
     
     /* Create top-of-book message */

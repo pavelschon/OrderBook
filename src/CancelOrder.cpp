@@ -44,7 +44,7 @@ void OrderBook::cancelOrderImpl(Response& response, OrderContainer& container, c
         response.acknowledge(order);
         
         /* create top-of-book message */
-        response.topOfBook(container, prevTopOfBook, order->side);
+        response.topOfBook(container, prevTopOfBook, order.side);
     }
 }
 
