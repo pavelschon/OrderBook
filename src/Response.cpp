@@ -28,7 +28,8 @@ void Response::acknowledge(const Order& order)
     PyList ackMessage;
     
     ackMessage.append('A');
-    ackMessage.append(order.getUserId());
+    ackMessage.append(order.getIp());
+    ackMessage.append(order.getPort());
     ackMessage.append(order.getOrderId());
     
     payload.append(ackMessage);
@@ -45,9 +46,11 @@ void Response::trade(const Order& bidOrder, const Order& askOrder, const int mat
     PyList tradeMessage;
     
     tradeMessage.append('T');
-    tradeMessage.append(bidOrder.getUserId());
+    tradeMessage.append(bidOrder.getIp());
+    tradeMessage.append(bidOrder.getPort());
     tradeMessage.append(bidOrder.getOrderId());
-    tradeMessage.append(askOrder.getUserId());
+    tradeMessage.append(askOrder.getIp());
+    tradeMessage.append(askOrder.getPort());
     tradeMessage.append(askOrder.getOrderId());
     tradeMessage.append(matchPrice);
     tradeMessage.append(matchQty);

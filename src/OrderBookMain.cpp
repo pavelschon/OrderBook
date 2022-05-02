@@ -17,8 +17,9 @@ BOOST_PYTHON_MODULE( orderbook )
     std::srand(static_cast<const unsigned int>(std::time( nullptr)));
 
     py::class_<OrderBook, boost::noncopyable>( "OrderBook" )
-        .def("newOrder", &OrderBook::newOrder, py::args("userId", "price", "qty", "side", "orderId"))
-        .def("cancelOrder", &OrderBook::cancelOrder, py::args("userId", "orderId"))
+        .def("newOrder", &OrderBook::newOrder, py::args("ip", "port", "orderId", "side", "price", "qty" ))
+        .def("cancelOrder", &OrderBook::cancelOrder, py::args("ip", "port", "orderId"))
+        .def("cancelAll", &OrderBook::cancelAll, py::args("ip", "port"))
         .def("flush", &OrderBook::flush)
     ;
 }

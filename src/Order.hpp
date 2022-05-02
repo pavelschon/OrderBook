@@ -15,7 +15,7 @@ class Order
     
 public:
     /* ctor */
-    Order(const int price_, const int qty_, const char side_, const int userId_, const int orderId_);
+    Order(const unsigned int ip_, const unsigned short port_, const int orderId_, const char side_, const int price_, const int qty_);
     
     /* Check if this order is executable with other order */
     bool isTradeableWith( const Order& order ) const;
@@ -32,8 +32,14 @@ public:
     /* Get order unique id */
     UniqueId getUniqueId( void ) const;
     
+    /* Get order unique id */
+    UserId getUserId( void ) const;
+    
     /* Get order user id */
-    int getUserId( void ) const;
+    unsigned int getIp( void ) const;
+    
+    /* Get order user id */
+    unsigned short getPort( void ) const;
     
     /* Get order id */
     int getOrderId( void ) const;
@@ -46,12 +52,12 @@ public:
 
 private:
     const Time time;
+    const unsigned int ip;
+    const unsigned short port;
+    const int orderId;
+    const char side;
     const int price;
     
     /* quantity changes during (partial) execution, hence not const */
     int qty;
-    
-    const char side;
-    const int userId;
-    const int orderId;
 };
