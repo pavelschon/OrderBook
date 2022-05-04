@@ -14,6 +14,8 @@ from twisted.internet import reactor, protocol
 from twisted.protocols import basic
 from twisted.logger import Logger, textFileLogObserver
 
+# N 1 B 100 10
+# N 2 S 150 2
 
 class NewOrder:
     def __init__(self, *args):
@@ -27,6 +29,16 @@ class NewOrder:
         
     def toTuple(self, ip, port):
         return ip, port, self.orderId, self.side, self.price, self.quantity
+    
+class ModifyOrder:
+    def __init__(self, *args):
+        orderId, quantity = args
+        
+        self.orderId = int(orderId)
+        self.quantity = int(quantity) # new quantity to be changed
+        
+    def toTuple(self, ip, port):
+        return ip, port, self.orderId, self.quantity
         
         
 class CancelOrder:
@@ -127,6 +139,9 @@ class OrderBookTCP(basic.LineReceiver):
         
         if message_type == 'N':
             self.newOrder(args)
+            
+        elif message_type == 'M':
+            self.modiyOrder(args)
         
         elif message_type == 'C':
             self.cancelOrder(args)
@@ -148,6 +163,21 @@ class OrderBookTCP(basic.LineReceiver):
         else:
             result = self.factory.orderbook.newOrder(
                 *newOrder.toTuple(self.ip, self.addr.port))
+            
+            self.dispatchResult(result)
+    
+    
+    ##
+    # @brief Implement tmodify order message
+    #
+    #
+    def modifyorder(self, args):
+        try:
+            modifiedOrder = ModifyOrder(*args)
+        except (TypeError, ValueError) as e:
+            self.onError(e)
+        else:
+            result = self.factory.orderbook.modifyOrder(*modifedOrder.toTuple(self.ip, self.port))
             
             self.dispatchResult(result)
 
