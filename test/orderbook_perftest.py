@@ -9,6 +9,7 @@ import argparse
 prices = list(range(10, 21))
 quantities = list(range(100, 201))
 userIds = (1, 2, 3)
+ports = (1000, 1001, 1002)
 sides = ( 'B', 'S' )
 
 
@@ -35,10 +36,11 @@ if __name__ == '__main__':
     for i in range(namespace.transactions):
         result = book.newOrder(
             random.choice(userIds),             # userId
+            random.choice(ports),               # userId
+            i,                                  # orderId
+            random.choice(sides),               # side
             random.choice(prices),              # price
             random.choice(quantities),          # qty
-            random.choice(sides),               # side
-            i                                   # orderId
         )
         
         if namespace.verbose:

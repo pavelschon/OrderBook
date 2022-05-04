@@ -11,12 +11,12 @@
  * @brief Cancel existing order
  * 
  */
-PyList OrderBook::cancelOrder(const int userId, const int orderId)
+PyList OrderBook::cancelOrder(const unsigned int ip, const unsigned short port, const int orderId)
 {
     Response response;
     
-    cancelOrderImpl(response, bidOrders, userId, orderId);
-    cancelOrderImpl(response, askOrders, userId, orderId);
+    cancelOrderImpl(response, bidOrders, ip, port, orderId);
+    cancelOrderImpl(response, askOrders, ip, port, orderId);
     
     return response.get();
 }
@@ -27,10 +27,10 @@ PyList OrderBook::cancelOrder(const int userId, const int orderId)
  * 
  */
 template<class OrderContainer>
-void OrderBook::cancelOrderImpl(Response& response, OrderContainer& container, const int userId, const int orderId )
+void OrderBook::cancelOrderImpl(Response& response, OrderContainer& container, const unsigned int ip, const unsigned short port, const int orderId)
 {
     auto& idx = container.template get<Tag::UniqueId>();
-    const auto& it = idx.find(std::make_tuple(userId, orderId));
+    const auto& it = idx.find(std::make_tuple(ip, port, orderId));
 
     if(it != idx.end())
     {
@@ -50,6 +50,6 @@ void OrderBook::cancelOrderImpl(Response& response, OrderContainer& container, c
 
 
 /* explicitly instantiate template functions */
-template void OrderBook::cancelOrderImpl(Response&, BidOrderContainer&, const int, const int );
-template void OrderBook::cancelOrderImpl(Response&, AskOrderContainer&, const int, const int );
+template void OrderBook::cancelOrderImpl(Response&, BidOrderContainer&, const unsigned int, const unsigned short, const int);
+template void OrderBook::cancelOrderImpl(Response&, AskOrderContainer&, const unsigned int, const unsigned short, const int);
 

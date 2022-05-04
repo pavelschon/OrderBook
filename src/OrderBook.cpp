@@ -4,6 +4,7 @@
  */
 
 #include "OrderBook.hpp"
+#include "Response.hpp"
 
 
 /**
@@ -41,6 +42,21 @@ TopOfBook::Optional OrderBook::getTopOfBook(const OrderContainer& container)
 /* explicitly instantiate template functions */
 template TopOfBook::Optional OrderBook::getTopOfBook(const BidOrderContainer&);
 template TopOfBook::Optional OrderBook::getTopOfBook(const AskOrderContainer&);
+
+
+/**
+ * @brief Generate top of book for new clients
+ * 
+ */
+PyList OrderBook::topOfBook() const
+{
+    Response response;
+    
+    response.topOfBook(bidOrders, boost::none, 'B');
+    response.topOfBook(askOrders, boost::none, 'S');
+    
+    return response.get();
+}
 
 
 /**

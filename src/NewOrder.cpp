@@ -11,18 +11,18 @@
  * @brief Create new order
  * 
  */
-PyList OrderBook::newOrder(const int userId, const int price, const int qty, const char side, const int orderId)
+PyList OrderBook::newOrder(const unsigned int ip, const unsigned short port, const int orderId, const char side, const int price, const int qty)
 {
     Response response;
     
     switch(side)
     {
         case Side::Buy:
-            newOrderImpl(bidOrders, askOrders, response, price, qty, side, userId, orderId);
+            newOrderImpl(bidOrders, askOrders, response, ip, port, orderId, side, price, qty);
             break;
             
         case Side::Sell:
-            newOrderImpl(askOrders, bidOrders, response, price, qty, side, userId, orderId);
+            newOrderImpl(askOrders, bidOrders, response, ip, port, orderId, side, price, qty);
             break;
     }
     
@@ -36,14 +36,14 @@ PyList OrderBook::newOrder(const int userId, const int price, const int qty, con
  */
 template<class OrderContainer, class OtherContainer>
 void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherContainer, Response& response,
-                             const int price, const int qty, const char side, const int userId, const int orderId)
+                             const unsigned int ip, const unsigned short port, const int orderId, const char side, const int price, const int qty)
 {
     /* calculate top-of-book */
     const auto& prevTopOfBook = OrderBook::getTopOfBook(container);
     const auto& prevTopOfBookOther = OrderBook::getTopOfBook(otherContainer);
     
     /* create new order */
-    Order order{ price, qty, side, userId, orderId };
+    Order order{ ip, port, orderId, side, price, qty };
     
     /* create acknowledge message */
     response.acknowledge(order);
@@ -78,8 +78,8 @@ void OrderBook::newOrderImpl(OrderContainer& container, OtherContainer& otherCon
 
 /* explicitly instantiate template functions */
 template void OrderBook::newOrderImpl(BidOrderContainer&, AskOrderContainer&, Response&,
-                                      const int, const int, const char, const int, const int);
+                                      const unsigned int, const unsigned short, const int, const char, const int, const int);
 
 template void OrderBook::newOrderImpl(AskOrderContainer&, BidOrderContainer&, Response&,
-                                      const int, const int, const char, const int, const int);
+                                      const unsigned int, const unsigned short, const int, const char, const int, const int);
 

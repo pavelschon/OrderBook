@@ -22,10 +22,16 @@ public:
     OrderBook& operator=(const OrderBook&) = delete;
     
     /* Create new order */
-    PyList newOrder(const int userId, const int price, const int qty, const char side, const int orderId);
+    PyList newOrder(const unsigned int ip, const unsigned short port, const int orderId, const char side, const int price, const int qty);
     
     /* Cancel existing order */
-    PyList cancelOrder(const int userId, const int userOrderId);
+    PyList cancelOrder(const unsigned int ip, const unsigned short port, const int orderId);
+    
+    /* Cancel all orders of user */
+    PyList cancelAll(const unsigned int ip, const unsigned short port);
+    
+    /* get top-of-book */
+    PyList topOfBook() const;
     
     /* Flush orderbook */
     void flush();
@@ -38,11 +44,15 @@ private:
     /* Create new order */
     template<class OrderContainer, class OtherContainer>
     static void newOrderImpl(OrderContainer& container, OtherContainer& otherContainer, Response& response,
-                             const int price, const int qty, const char side, const int userId, const int orderId);
+                             const unsigned int ip, const unsigned short port, const int orderId, const char side, const int price, const int qty);
 
     /* Cancel existing order */
     template<class OrderContainer>
-    static void cancelOrderImpl(Response& response, OrderContainer& container, const int userId, const int orderId);
+    static void cancelOrderImpl(Response& response, OrderContainer& container, const unsigned int ip, const unsigned short port, const int orderId);
+    
+    /* Cancel existing order */
+    template<class OrderContainer>
+    static void cancelAllImpl(Response& response, OrderContainer& container, const unsigned int ip, const unsigned short port, const char side);
     
     /* Handle order execution (trade) */
     template<class OrderContainer>

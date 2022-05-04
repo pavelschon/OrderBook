@@ -10,13 +10,14 @@
  * @brief Constructor
  * 
  */
-Order::Order(const int price_, const int qty_, const char side_, const int userId_, const int orderId_):
+Order::Order(const unsigned int ip_, const unsigned short port_, const int orderId_, const char side_, const int price_, const int qty_):
     time{ std::chrono::high_resolution_clock::now() },
-    price{ price_ },
-    qty{ qty_ },
+    ip{ ip_ },
+    port{ port_ },
+    orderId{ orderId_ },
     side { side_ },
-    userId{ userId_ },
-    orderId{ orderId_ }
+    price{ price_ },
+    qty{ qty_ }
 {
 
 }
@@ -58,7 +59,7 @@ int Order::getQty() const
  */
 UniqueId Order::getUniqueId() const
 {
-    return std::make_tuple(userId, orderId);
+    return std::make_tuple(ip, port, orderId);
 }
 
 
@@ -66,9 +67,29 @@ UniqueId Order::getUniqueId() const
  * @brief Get order user id
  * 
  */
-int Order::getUserId() const
+UserId Order::getUserId() const
 {
-    return userId;
+    return std::make_tuple(ip, port);
+}
+
+
+/**
+ * @brief Get order user id
+ * 
+ */
+unsigned int Order::getIp() const
+{
+    return ip;
+}
+
+
+/**
+ * @brief Get order port
+ * 
+ */
+unsigned short Order::getPort() const
+{
+    return port;
 }
 
 

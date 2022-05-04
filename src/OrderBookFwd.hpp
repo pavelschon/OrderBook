@@ -13,7 +13,8 @@
 #include <boost/optional.hpp>
 
 using PyList = boost::python::list;
-using UniqueId = std::tuple<int, int>;
+using UserId = std::tuple<unsigned int, unsigned short>;
+using UniqueId = std::tuple<unsigned int, unsigned short, int>;
 using Time = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
 class Orderbook;
