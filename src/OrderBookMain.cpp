@@ -20,6 +20,7 @@ BOOST_PYTHON_MODULE( orderbook )
         .def("newOrder", &OrderBook::newOrder, py::args("ip", "port", "orderId", "side", "price", "qty" ))
         .def("cancelOrder", &OrderBook::cancelOrder, py::args("ip", "port", "orderId"))
         .def("cancelAll", &OrderBook::cancelAll, py::args("ip", "port"))
+        .def("topOfBook", &OrderBook::topOfBook)
         .def("flush", &OrderBook::flush)
     ;
 }

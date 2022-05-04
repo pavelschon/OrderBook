@@ -1,124 +1,330 @@
 #!/usr/bin/env python3
 
-import argparse
+import re
 import sys
-import os
+import codecs
+import weakref
+import argparse
+import ipaddress
+import collections
+
+import orderbook
 
 from twisted.internet import reactor, protocol
+from twisted.protocols import basic
 from twisted.logger import Logger, textFileLogObserver
 
 
-def LineBuffer(logger, streamer):
-    '''accumulate data, split to lines, send to the streamer'''
-    
-    data, separator = b'', b'\r\n'
-    
-    while True:
-        data += (yield)
+class NewOrder:
+    def __init__(self, *args):
+        orderId, side, price, quantity = args
         
-        while True:
-            boundary = data.find(separator)
-            
-            if boundary < 0:
-                break
+        self.orderId = int(orderId)
+        self.side = side
+        self.price = int(price)
+        self.quantity = int(quantity)
+        
+        
+    def toTuple(self, ip, port):
+        return ip, port, self.orderId, self.side, self.price, self.quantity
+        
+        
+class CancelOrder:
+    def __init__(self, *args):
+        orderId, = args
+        
+        self.orderId = int(orderId)
+        
+        
+    def toTuple(self, ip, port):
+        return ip, port, self.orderId
+        
+        
+class TopOfBook:
+    def __init__(self, *args):
+        self.message_type, self.side, self.price, self.quantity = args
+    
+    
+    def toTuple(self):
+        return self.message_type, self.side, self.price, self.quantity
+        
+        
+class Ack:
+    def __init__(self, *args):
+        self.message_type, self.ip, self.port, self.orderId = args
+        
+        
+    def toTuple(self):
+        return (self.message_type, self.orderId)
+        
+        
+class Trade:
+    def __init__(self, *args):
+        ( self.message_type, self.bidIp, self.bidPort, self.bidOrderId,
+         self.askIp, self.askPort, self.askOrderId, self.matchPrice, self.matchQuantity ) = args
+        
+        
+    def toBid(self):
+        return ( self.message_type, self.bidOrderId, self.matchPrice, self.matchQuantity )
+    
+    
+    def toAsk(self):
+        return ( self.message_type, self.askOrderId, self.matchPrice, self.matchQuantity )
 
-            message = data[0:boundary].strip()
-            
-            logger.info('Input: {msg}', msg=message.decode('ascii'))
-            
-            streamer.transport.write(message)
-            streamer.transport.write(b'\n')
-            
-            data = data[boundary+1:]
-
-
-class OrderBookSubprocess(protocol.ProcessProtocol):
+        
+class OrderBookTCP(basic.LineReceiver):
     logger = Logger(observer=textFileLogObserver(sys.stdout))
     
-    def outReceived(self, data):
-        for line in data.decode('ascii').split('\n'):
-            self.logger.info(line)
-        
-    def errReceived(self, data):
-        for line in data.decode('ascii').split('\n'):
-            self.logger.error(line)
-            
-    def processExited(self, status):
-        self.logger.error(str(status))
-        
-    def processEnded(self, status):
-        reactor.callFromThread(reactor.stop)
-
-
-class OrderBookUDP(protocol.DatagramProtocol):
-    logger = Logger(observer=textFileLogObserver(sys.stdout))
-    
-    def __init__(self, streamer):
-        self.lineBuffer = LineBuffer(self.logger, streamer)
-        next(self.lineBuffer)
-                
-    
-    def datagramReceived(self, data, addr):
-        self.lineBuffer.send(data)
-        
-        
-class OrderBookTCP(protocol.Protocol):
-    logger = Logger(observer=textFileLogObserver(sys.stdout))
-    
-    def __init__(self, streamer, addr):
+    def __init__(self, factory, addr):
+        self.factory = weakref.proxy(factory)
         self.addr = addr
-        self.lineBuffer = LineBuffer(self.logger, streamer)
-        next(self.lineBuffer)
+        self.ip = int(ipaddress.ip_address(addr.host))
+        
+        # add self to connected clients
+        self.factory.addClient(self)
         
         
+    
+    ##
+    # @brief On new connection, 
+    #
+    #
     def connectionMade(self):
+        result = self.factory.orderbook.topOfBook()
+        
+        for message in result:
+            topOfBook = TopOfBook(*message)
+            
+            self.transport.write(self.messageToBytes(topOfBook.toTuple()))
+            self.transport.write(self.delimiter)
+        
         self.logger.info('{addr.host}:{addr.port} connected', addr=self.addr)
     
     
+    
+    ##
+    # @brief Connection lost handler
+    #
+    #
     def connectionLost(self, reason):
+        result = self.factory.orderbook.cancelAll(self.ip, self.addr.port)
+        
+        self.dispatchResult(result)
+        
+        # delete self from connected clients
+        self.factory.delClient(self)
+        
         self.logger.info('{addr.host}:{addr.port} disconnected, reason: {reason}',
                          addr=self.addr, reason=reason)
     
     
-    def dataReceived(self, data):
-        self.lineBuffer.send(data)
+    ##
+    # @brief Dispatch incoming messages
+    #
+    #
+    def lineReceived(self, data):
+        message_type, *args = data.decode('ascii').split(' ')
+        
+        if message_type == 'N':
+            self.newOrder(args)
+        
+        elif message_type == 'C':
+            self.cancelOrder(args)
+            
+        else:
+            self.onError(ValueError('Invalid message'))
+            
+        
+    ##
+    # @brief Dispatch NewOrder messages
+    #
+    #
+    def newOrder(self, args):
+        try:
+            newOrder = NewOrder(*args)
+        except (TypeError, ValueError) as e:
+            self.onError(e)
+        
+        else:
+            result = self.factory.orderbook.newOrder(
+                *newOrder.toTuple(self.ip, self.addr.port))
+            
+            self.dispatchResult(result)
+
+    
+    ##
+    # @brief Dispatch CancelOrder messages
+    #
+    #
+    def cancelOrder(self, args):
+        try:
+            cancelOrder = CancelOrder(*args)
+        except (TypeError, ValueError) as e:
+            self.onError(e)
+            
+        else:
+            result = self.factory.orderbook.cancelOrder(
+                *cancelOrder.toTuple(self.ip, self.addr.port))
+            
+            self.dispatchResult(result)
+            
+    
+    ##
+    # @brief Dispatch result messages
+    #
+    #
+    def dispatchResult(self, result):
+        for message in result:
+            if message[0] == 'B':
+                self.sendTopOfBook(message)
+            
+            elif message[0] == 'A':
+                self.sendAck(message)
+                
+            elif message[0] == 'T':
+                self.sendTrade(message)
+    
+    
+    ##
+    # @brief Send TopOfBook message
+    #
+    #
+    def sendTopOfBook(self, message):
+        topOfBook = TopOfBook(*message)
+                
+        self.factory.sendAll(self.messageToBytes(topOfBook.toTuple()))
+        
+    
+    ##
+    # @brief Send Ack message
+    #
+    #
+    def sendAck(self, message):
+        ack = Ack(*message)
+                
+        self.transport.write(self.messageToBytes(ack.toTuple()))
+        self.transport.write(self.delimiter)
+        
+    
+    
+    ##
+    # @brief Send Trade message
+    #
+    #
+    def sendTrade(self, message):
+        trade = Trade(*message)
+        
+        self.factory.sendToClient(trade.bidIp, trade.bidPort, self.messageToBytes(trade.toBid()))
+        self.factory.sendToClient(trade.askIp, trade.askPort, self.messageToBytes(trade.toAsk()))
+    
+    
+    ##
+    # @brief Log error and disconnect client
+    #
+    #
+    def onError(self, err):
+        self.logger.error('{addr.host}:{addr.port}: {err}', addr=self.addr, err=err)
+        
+        self.transport.loseConnection()
+        
+    
+    ##
+    # @brief Convert message tuple to bytes
+    #
+    #
+    @staticmethod
+    def messageToBytes(message):
+        return b' '.join(codecs.iterencode(map(str, message), 'ascii'))
 
 
 class OrderBookFactory(protocol.Factory):
-    def __init__(self, streamer):
-        self.streamer = streamer
+    logger = Logger(observer=textFileLogObserver(sys.stdout))
+    
+    ##
+    # @brief Constructor
+    #
+    #
+    def __init__(self, symbol, port):
+        self.symbol = symbol
+        self.orderbook = orderbook.OrderBook()
+        self.clients = {}
+        
+        self.logger.info('Started orderbook for {} on port tcp/{}'.format(symbol, port))
         
         
+    ##
+    # @brief Build client
+    #
+    #
     def buildProtocol(self, addr):
-        return OrderBookTCP(self.streamer, addr)
+        return OrderBookTCP(self, addr)
+    
+    
+    ##
+    # @brief Register client
+    #
+    #
+    def addClient(self, client):
+        self.clients[client.addr] = client
+    
+    
+    ##
+    # @brief Unregister client
+    #
+    #
+    def delClient(self, client):
+        del(self.clients[client.addr])
+        
+    
+    ##
+    # @brief Send message to all clients
+    #
+    #
+    def sendAll(self, message):
+        for client in self.clients.values():
+            client.transport.write(message)
+            client.transport.write(OrderBookTCP.delimiter)
+            
+           
+    ##
+    # @brief Send message to client specified by ip and port
+    #
+    #
+    def sendToClient(self, ip, port, message):
+        for client in self.clients.values():
+            if all((client.ip == ip, client.addr.port == port)):
+                client.transport.write(message)
+                client.transport.write(OrderBookTCP.delimiter)
+
+
+symbol_re = re.compile('[A-Z]+\:\d+')
+
+##
+# @brief Validate symbol:port
+#
+#
+def symbol(value):
+    if not symbol_re.match(value):
+        raise argparse.ArgumentTypeError('invalid symbol: {}'.format(value))
+    return value
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-p', '--port',
-        type = int,
-        default = 1234,
-        help = 'Listen port'
-    )
-    
-    parser.add_argument(
-        '-s', '--streamer',
-        default = '/usr/bin/orderbook_streamer.py',
-        help = 'Path to orderbook_streamer.py'
+        'symbols',
+        type = symbol,
+        metavar ='symbol:port',
+        nargs = '+',
+        help = 'Symbols'
     )
     
     namespace = parser.parse_args()
     
-    logger = Logger(observer=textFileLogObserver(sys.stdout))
-    logger.info('Starting orderbook streamer subprocess: {path}', path=namespace.streamer)
+    for value in namespace.symbols:
+        symbol, port = value.split(':')
+        
+        reactor.listenTCP(int(port), OrderBookFactory(symbol, port))
     
-    streamer = OrderBookSubprocess()
-    
-    reactor.spawnProcess(
-        streamer, namespace.streamer, args=[os.path.basename(namespace.streamer)])
-    
-    reactor.listenUDP(namespace.port, OrderBookUDP(streamer))
-    reactor.listenTCP(namespace.port, OrderBookFactory(streamer))
     reactor.run()
 

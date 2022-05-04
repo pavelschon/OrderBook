@@ -30,6 +30,9 @@ public:
     /* Cancel all orders of user */
     PyList cancelAll(const unsigned int ip, const unsigned short port);
     
+    /* get top-of-book */
+    PyList topOfBook() const;
+    
     /* Flush orderbook */
     void flush();
     
